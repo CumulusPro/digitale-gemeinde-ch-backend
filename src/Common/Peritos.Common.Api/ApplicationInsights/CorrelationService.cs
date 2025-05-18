@@ -1,0 +1,30 @@
+using Microsoft.AspNetCore.Http;
+using Peritos.Common.Logging.Abstractions;
+
+namespace Peritos.Common.Api.ApplicationInsights
+{
+    public class CorrelationService : ICorrelationService
+    {
+        private readonly IHttpContextAccessor _httpContextAccessor;
+
+        public CorrelationService(IHttpContextAccessor httpContextAccessor)
+        {
+            _httpContextAccessor = httpContextAccessor;
+        }
+
+        public string CorrelationId
+        {
+            get
+            {
+                var context = _httpContextAccessor?.HttpContext;
+                if (context == null)
+                {
+                    return string.Empty;
+                }
+
+                return context.Request.Headers["x-correlation-id"];
+            }
+        }
+
+    }
+}

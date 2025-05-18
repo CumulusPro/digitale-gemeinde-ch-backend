@@ -1,0 +1,338 @@
+﻿using AutoMapper;
+using Cpro.Forms.Data.Repositories;
+using Cpro.Forms.Integration.Storage.Services;
+using Cpro.Forms.Service.Models;
+using Newtonsoft.Json;
+using Peritos.Common.Abstractions.Paging;
+using System.Text;
+
+namespace Cpro.Forms.Service.Services;
+
+public class FormDesignerService : IFormDesignerService
+{
+    private readonly IAzureBlobService _azureBlobService;
+    private readonly IMapper _mapper;
+    private readonly IFormDesignRepository _formDesignRepository;
+    private readonly IFormDesignerHistoryService _formDesignHistoryService;
+
+    public FormDesignerService(
+        IFormDesignRepository formDesignRepository,
+        IFormDesignerHistoryService formDesignHistoryService,
+        IMapper mapper,
+        IAzureBlobService azureBlobService)
+    {
+        _mapper = mapper;
+        _azureBlobService = azureBlobService;
+        _formDesignRepository = formDesignRepository;
+        _formDesignHistoryService = formDesignHistoryService;
+    }
+
+    public async Task<FormDesign> CreateFormDefinitionAsync(FieldRequest fieldRequest, string formId, int? tenantId, string email)
+    {
+        var tenant = Convert.ToInt32(tenantId);
+        var formDesign = await _formDesignRepository.GetFormDesign(formId, tenant);
+
+        formDesign = formDesign == null
+                        ? await CreateFormDesignAsync(fieldRequest, formId, email, tenant)
+                        : await UpdateFormDesignAsync(fieldRequest, formId, formDesign);
+
+        if (fieldRequest.Fields.Any())
+        {
+            var lastId = fieldRequest.Fields.Max(x => x.Id ?? 0);
+
+            foreach (var field in fieldRequest.Fields.Where(f => f.Id == null))
+            {
+                Field newField = new Field
+                {
+                    Name = field.Name,
+                    Label = field.DisplayName,
+                    Mandatory = field.IsRequired ?? false,
+                    FieldType = MapFieldType(field.Datatype),
+                };
+
+                field.Id = ++lastId;
+                field.LookupValues = field.LookupValues != null
+                                     ? field.LookupValues.Select((x, y) => new LookupValues { displayOrder = y++, displayValue = x.value, value = x.value }).ToList()
+                                     : field.LookupValues;
+            }
+        }
+
+        formId = formDesign.Id;
+        fieldRequest.Id = formDesign.FormId;
+
+        var json = JsonConvert.SerializeObject(fieldRequest);
+        var jsonBytes = Encoding.UTF8.GetBytes(json);
+
+        using (var memoryStream = new MemoryStream(jsonBytes))
+        {
+            memoryStream.Position = 0;
+            await _azureBlobService.UploadFile(formDesign.StorageUrl, memoryStream);
+        }
+
+        await _formDesignHistoryService.SaveFormDesignVersionHistory(formDesign);
+        formDesign.StorageUrl = _azureBlobService.GetSignedUrl(formDesign.StorageUrl);
+
+        var response = _mapper.Map<FormDesign>(formDesign);
+        return response;
+    }
+
+    public async Task<string> GetFormDataJsonAsync(string formId)
+    {
+        var formDesign = await _formDesignRepository.GetFormDesignByFormId(formId)
+            ?? throw new FileNotFoundException($"FormDefinition not found with FormId: {formId}");
+
+        return _azureBlobService.GetSignedUrl(formDesign.StorageUrl);
+    }
+
+    public async Task<DocumentResponse> GetFormDefinitionResponseAsync(string formId, int? tenantId)
+    {
+        var form = await _formDesignRepository.GetFormDesign(formId, Convert.ToInt32(tenantId))
+            ?? throw new FileNotFoundException($"FormDefinition not found with FormId: {formId}");
+
+        var blobPath = !string.IsNullOrWhiteSpace(form.StorageUrl)
+                        ? form.StorageUrl
+                        : $"{formId}/v{form.Version}.json";
+
+        var formDefinition = await _azureBlobService.GetFile(blobPath)
+            ?? throw new FileNotFoundException($"FormDefinition not found at: {blobPath}");
+
+        var documentResponse = JsonConvert.DeserializeObject<DocumentResponse>(formDefinition, GetSerializationSettings());
+
+        if (documentResponse.useTenantDesign ?? false)
+        {
+            var tenantIdDefinition = await _azureBlobService.GetFile($"{tenantId}/v1.json") // check whether to maintain versioning for tenants?
+                ?? throw new FileNotFoundException($"FormDefinition not found with TenantId: {tenantId}");
+
+            var tenantDesign = JsonConvert.DeserializeObject<TenantDesign>(tenantIdDefinition, GetSerializationSettings());
+
+            documentResponse.header = tenantDesign.header;
+            documentResponse.footer = tenantDesign.footer;
+            documentResponse.designConfig = tenantDesign.designConfig;
+        }
+
+        GetHeaderFooterSettings(documentResponse);
+        documentResponse.IsActive = form.IsActive;
+
+        return documentResponse;
+    }
+
+    public async Task<List<FormDesign>> GetFormDesignsByTenantIdAsync(int tenantId)
+    {
+        var formDesigns = await _formDesignRepository.GetFormDesignsByTenantId(tenantId);
+
+        foreach (var form in formDesigns)
+        {
+            form.StorageUrl = _azureBlobService.GetSignedUrl(form.StorageUrl);
+        }
+
+        return _mapper.Map<List<FormDesign>>(formDesigns);
+    }
+
+    public async Task DeleteFormDesignAsync(string formId, int tenantId)
+    {
+        await _azureBlobService.DeleteFolder(formId);
+        await _formDesignRepository.DeleteFormDesignAsync(formId, tenantId);
+    }
+
+    public async Task<FormDesign> DuplicateFormDefinitionAsync(string formId, string email)
+    {
+        var originalForm = await _formDesignRepository.GetFormDesignByFormId(formId)
+            ?? throw new FileNotFoundException($"Original FormDefinition not found with formId: {formId}"); ;
+
+        var newFormId = Guid.NewGuid().ToString();
+        var newFormCount = await _formDesignRepository.GetFormDesignCountAsync() + 1;
+
+        var duplicatedForm = new Data.Models.FormDesign
+        {
+            Id = newFormId,
+            Name = $"{originalForm.Name}_{DateTime.Now:yyyyMMddHHmmss}",
+            TenantId = originalForm.TenantId,
+            FormId = newFormCount,
+            TenantName = originalForm.TenantName,
+            Version = 1,
+            StorageUrl = $"{newFormId}/v1.json",
+            Designers = originalForm.Designers?.Select(designer => new Data.Models.Designer
+            {
+                DesignerId = designer.DesignerId,
+                FormDesignId = newFormId
+            }).ToList() ?? new List<Data.Models.Designer>(),
+            Processors = originalForm.Processors?.Select(processor => new Data.Models.Processor
+            {
+                ProcessorId = processor.ProcessorId,
+                FormDesignId = newFormId
+            }).ToList() ?? new List<Data.Models.Processor>(),
+            FormStates = originalForm.FormStates?.Select(s => new Data.Models.FormStatesConfig
+            { 
+                Label = s.Label,
+                Value = s.Value,
+                FormDesignId = newFormId
+            })?.ToList(),
+            CreatedBy = email
+        };
+
+        var savedForm = await _formDesignRepository.CreateFormDesignAsync(duplicatedForm);
+
+        // Get fields from blob
+        var originalJson = await _azureBlobService.GetFile(originalForm.StorageUrl ?? $"{formId}/v{originalForm.Version}.json");
+        var originalRequest = JsonConvert.DeserializeObject<FieldRequest>(originalJson);
+
+        // Update name and ID in duplicated request
+        originalRequest.Id = savedForm.FormId;
+        originalRequest.Name = duplicatedForm.Name;
+
+        var newJson = JsonConvert.SerializeObject(originalRequest);
+        var jsonBytes = Encoding.UTF8.GetBytes(newJson);
+
+        using (var memoryStream = new MemoryStream(jsonBytes))
+        {
+            memoryStream.Position = 0;
+            await _azureBlobService.UploadFile(savedForm.StorageUrl, memoryStream);
+        }
+
+        await _formDesignHistoryService.SaveFormDesignVersionHistory(savedForm);
+        savedForm.StorageUrl = _azureBlobService.GetSignedUrl(savedForm.StorageUrl);
+
+        return _mapper.Map<FormDesign>(savedForm);
+    }
+
+    public async Task<PagingResponse<FormDesign>> SearchFormDesignsAsync(SearchRequest searchRequest, int tenantId)
+    {
+        var datamodel = _mapper.Map<Data.Models.SearchRequest>(searchRequest);
+        var formDesigns = await _formDesignRepository.SearchFormDesignsAsync(datamodel, tenantId);
+        return _mapper.Map<PagingResponse<FormDesign>>(formDesigns);
+    }
+
+    public async Task ActivateFormDefinitionAsync(string formId, bool isActive, int? tenantId)
+    {
+        var formDesign = await _formDesignRepository.GetFormDesign(formId, tenantId ?? 0)
+            ?? throw new FileNotFoundException($"FormDefinition not found with FormId: {formId}");
+
+        formDesign.IsActive = isActive;
+        await _formDesignRepository.UpdateFormDesignAsync(formId, formDesign);
+    }
+
+    private string MapFieldType(string datatype)
+    {
+        if (datatype.ToLower().Equals("number"))
+            return "Integer";
+        if (datatype.ToLower().Equals("amount"))
+            return "Double";
+        if (datatype.ToLower().Equals("datetime"))
+            return "DateTime";
+        if (datatype.ToLower().Equals("date"))
+            return "Date";
+        if (datatype.ToLower().Equals("string"))
+            if (datatype.ToLower().Equals("ahvnumber"))
+                return "String";
+
+        return string.Empty;
+    }
+
+    private JsonSerializerSettings GetSerializationSettings()
+    {
+        return new JsonSerializerSettings
+        {
+            TypeNameHandling = TypeNameHandling.None,
+            Formatting = Formatting.Indented
+        };
+    }
+
+    private void GetHeaderFooterSettings(DocumentResponse? documentResponse)
+    {
+        var headerSettings = new Header() { showHeader = true, content = documentResponse?.header?.content, layoutProps = new Layoutprops(), layoutType = "STANDARD" };
+        var footerSettings = new Footer() { showFooter = true, content = documentResponse?.footer?.content, layoutProps = new Layoutprops1(), layoutType = "STANDARD" };
+
+        if (string.IsNullOrWhiteSpace(documentResponse?.header?.layoutProps?.logoUrl))
+        {
+            if (documentResponse != null)
+            {
+                documentResponse.header = headerSettings;
+                documentResponse.footer = footerSettings;
+            }
+        }
+    }
+
+    private async Task<Data.Models.FormDesign?> CreateFormDesignAsync(FieldRequest fieldRequest, string formId, string email, int tenant)
+    {
+        var newFormId = string.IsNullOrWhiteSpace(formId) ? Guid.NewGuid().ToString() : formId;
+        var formCount = await _formDesignRepository.GetFormDesignCountAsync() + 1;
+
+        var formDesign = new Data.Models.FormDesign()
+        {
+            Id = newFormId,
+            Name = fieldRequest.Name,
+            TenantId = tenant,
+            FormId = formCount,
+            TenantName = string.Empty,
+            Version = 1,
+            StorageUrl = $"{newFormId}/v1.json",
+            Designers = MapToDesigners(fieldRequest.designers, newFormId),
+            Processors = MapToProcessors(fieldRequest.processors, newFormId),
+            FormStates = MapToFormStates(fieldRequest.formStatesConfig, newFormId),
+            CreatedBy = email,
+            Tags = string.Join("|", fieldRequest.tags ?? new List<string>())
+        };
+
+        return await _formDesignRepository.CreateFormDesignAsync(formDesign);
+    }
+
+
+    private async Task<Data.Models.FormDesign?> UpdateFormDesignAsync(FieldRequest fieldRequest, string formId, Data.Models.FormDesign formDesign)
+    {
+        formDesign.Name = fieldRequest.DocumentTypeName;
+        formDesign.Tags = string.Join("|", fieldRequest.tags ?? new List<string>());
+
+        var incomingDesigners = MapToDesigners(fieldRequest.designers, formId);
+        var incomingProcessors = MapToProcessors(fieldRequest.processors, formId);
+        var incomingStates = MapToFormStates(fieldRequest.formStatesConfig, formId);
+
+        SyncCollection(formDesign.Processors, incomingProcessors, x => x.ProcessorId);
+        SyncCollection(formDesign.Designers, incomingDesigners, x => x.DesignerId);
+        SyncCollection(formDesign.FormStates, incomingStates, x => $"{x.Label.ToLower()}|{x.Value.ToLower()}");
+
+        formDesign.Version += 1;
+        formDesign.StorageUrl = $"{formId}/v{formDesign.Version}.json";
+
+        return await _formDesignRepository.UpdateFormDesignAsync(formId, formDesign);
+    }
+
+    private List<Data.Models.Designer> MapToDesigners(List<int> designers, string formId)
+    {
+        return designers.Select(designerId => new Data.Models.Designer
+        {
+            DesignerId = designerId,
+            FormDesignId = formId
+        }).ToList();
+    }
+
+    private List<Data.Models.Processor> MapToProcessors(List<int> processors, string formId)
+    {
+        return processors.Select(processorId => new Data.Models.Processor
+        {
+            ProcessorId = processorId,
+            FormDesignId = formId
+        }).ToList();
+    }
+
+    private List<Data.Models.FormStatesConfig> MapToFormStates(List<Models.FormStatesConfig> formStates, string formId)
+    {
+        return formStates.Select(state => new Data.Models.FormStatesConfig
+        {
+            Label = state.label,
+            Value = state.value,
+            FormDesignId = formId
+        }).ToList();
+    }
+
+    private void SyncCollection<T>(List<T> existing, List<T> incoming, Func<T, object> keySelector)
+    {
+        var existingKeys = existing.Select(keySelector).ToHashSet();
+        var incomingKeys = incoming.Select(keySelector).ToHashSet();
+
+        // Remove existing items not in incoming
+        existing.RemoveAll(x => !incomingKeys.Contains(keySelector(x)));
+
+        // Add new items not in existing
+        existing.AddRange(incoming.Where(x => !existingKeys.Contains(keySelector(x))));
+    }
+}

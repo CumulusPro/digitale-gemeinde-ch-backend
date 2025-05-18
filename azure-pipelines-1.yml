@@ -1,0 +1,51 @@
+# Trigger on commits to all branches except main
+#trigger:
+#  branches:
+#    exclude:
+#      - main
+
+# Trigger on all pull requests
+pr:
+  branches:
+    include:
+      - '*'
+
+jobs:
+- job: SigridCI
+  displayName: 'Run SigridCI on non-main branches or PRs'
+  pool:
+    vmImage: ubuntu-latest
+  container: softwareimprovementgroup/sigridci:azure
+  continueOnError: true
+  condition: or(ne(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.Reason'], 'PullRequest'))
+  steps:
+    - checkout: self
+      fetchDepth: 0
+      clean: true
+      persistCredentials: true
+    - bash: "sigridci.py --customer sgv --system GemeindeConnect --subsystem FormDesignerApi --source ."
+      env:
+        SIGRID_CI_TOKEN: $(SIGRID_CI_TOKEN)
+        SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+        PYTHONIOENCODING: utf8
+      continueOnError: true
+
+- job: SigridPublish
+  displayName: 'Run SigridPublish only after PR merge to main'
+  dependsOn: []
+  pool:
+    vmImage: ubuntu-latest
+  container: softwareimprovementgroup/sigridci:azure
+  continueOnError: true
+  condition: and(eq(variables['Build.SourceBranch'], 'refs/heads/main'), ne(variables['Build.Reason'], 'PullRequest'))
+  steps:
+    - checkout: self
+      fetchDepth: 0
+      clean: true
+      persistCredentials: true
+    - bash: "sigridci.py --customer sgv --system GemeindeConnect --subsystem FormDesignerApi --source . --publishonly"
+      env:
+        SIGRID_CI_TOKEN: $(SIGRID_CI_TOKEN)
+        SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+        PYTHONIOENCODING: utf8
+      continueOnError: true

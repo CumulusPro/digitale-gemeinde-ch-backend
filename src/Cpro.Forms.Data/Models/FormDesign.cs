@@ -1,0 +1,42 @@
+﻿namespace Cpro.Forms.Data.Models;
+
+public class FormDesign
+{
+    public string Id { get; set; }
+    public string Name { get; set; }
+    public int TenantId { get; set; }
+    public int FormId { get; set; }
+    public string TenantName { get; set; }
+    public List<Designer> Designers { get; set; } = new();
+    public List<Processor> Processors { get; set; } = new();
+    public string? StorageUrl { get; set; }
+    public bool? IsActive { get; set; }
+    public int Version { get; set; }
+    public List<FormStatesConfig> FormStates { get; set; } = new();
+    public string? CreatedBy { get; set; }
+    public DateTimeOffset DateCreated { get; set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset? DateUpdated { get; set; }
+    public string? Tags { get; set; }
+}
+
+public class FormStatesConfig
+{
+    public int FormStatesConfigId { get; set; }
+    public string Label { get; set; }
+    public string Value { get; set; }
+    public string FormDesignId { get; set; }
+}
+
+public class Designer
+{
+    public int Id { get; set; }
+    public int DesignerId { get; set; }
+    public string FormDesignId { get; set; }
+}
+
+public class Processor
+{
+    public int Id { get; set; }
+    public int ProcessorId { get; set; }
+    public string FormDesignId { get; set; }
+}
