@@ -11,41 +11,118 @@ pr:
       - '*'
 
 jobs:
-- job: SigridCI
-  displayName: 'Run SigridCI on non-main branches or PRs'
-  pool:
-    vmImage: ubuntu-latest
-  container: softwareimprovementgroup/sigridci:azure
-  continueOnError: true
-  condition: or(ne(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.Reason'], 'PullRequest'))
-  steps:
-    - checkout: self
-      fetchDepth: 0
-      clean: true
-      persistCredentials: true
-    - bash: "sigridci.py --customer sgv --system GemeindeConnect --subsystem FormDesignerApi --source ."
-      env:
-        SIGRID_CI_TOKEN: $(SIGRID_CI_TOKEN)
-        SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-        PYTHONIOENCODING: utf8
-      continueOnError: true
+# - job: SigridCI
+#   displayName: 'Run SigridCI on non-main branches or PRs'
+#   pool:
+#     vmImage: ubuntu-latest
+#   container: softwareimprovementgroup/sigridci:azure
+#   continueOnError: true
+#   condition: or(ne(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.Reason'], 'PullRequest'))
+#   steps:
+#     - checkout: self
+#       fetchDepth: 0
+#       clean: true
+#       persistCredentials: true
+#     - bash: "sigridci.py --customer sgv --system GemeindeConnect --subsystem FormDesignerApi --source ."
+#       env:
+#         SIGRID_CI_TOKEN: $(SIGRID_CI_TOKEN)
+#         SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+#         PYTHONIOENCODING: utf8
+#       continueOnError: true
 
-- job: SigridPublish
-  displayName: 'Run SigridPublish only after PR merge to main'
-  dependsOn: []
-  pool:
-    vmImage: ubuntu-latest
-  container: softwareimprovementgroup/sigridci:azure
-  continueOnError: true
-  condition: and(eq(variables['Build.SourceBranch'], 'refs/heads/main'), ne(variables['Build.Reason'], 'PullRequest'))
-  steps:
-    - checkout: self
-      fetchDepth: 0
-      clean: true
-      persistCredentials: true
-    - bash: "sigridci.py --customer sgv --system GemeindeConnect --subsystem FormDesignerApi --source . --publishonly"
-      env:
-        SIGRID_CI_TOKEN: $(SIGRID_CI_TOKEN)
-        SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-        PYTHONIOENCODING: utf8
-      continueOnError: true
+# - job: SigridPublish
+#   displayName: 'Run SigridPublish only after PR merge to main'
+#   dependsOn: []
+#   pool:
+#     vmImage: ubuntu-latest
+#   container: softwareimprovementgroup/sigridci:azure
+#   continueOnError: true
+#   condition: and(eq(variables['Build.SourceBranch'], 'refs/heads/main'), ne(variables['Build.Reason'], 'PullRequest'))
+#   steps:
+#     - checkout: self
+#       fetchDepth: 0
+#       clean: true
+#       persistCredentials: true
+#     - bash: "sigridci.py --customer sgv --system GemeindeConnect --subsystem FormDesignerApi --source . --publishonly"
+#       env:
+#         SIGRID_CI_TOKEN: $(SIGRID_CI_TOKEN)
+#         SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+#         PYTHONIOENCODING: utf8
+#       continueOnError: true
+
+  - job: BuildAPI
+    steps:
+    - task: SonarCloudPrepare@1
+      displayName: 'SonarCloud Prep'
+      inputs:
+        SonarCloud: 'SonarCloud'
+        organization: 'cumuluspro2'
+        scannerMode: 'MSBuild'
+        projectKey: 'formdesignerbackend'
+
+    - task: UseDotNet@2
+      inputs:
+        packageType: 'sdk'
+        version: '8.0.x'
+        includePreviewVersions: true
+
+    - task: DotNetCoreCLI@2
+      displayName: 'dotnet restore'
+      inputs:
+        command: restore
+        projects: src/*.sln
+
+    - task: DotNetCoreCLI@2
+      displayName: 'dotnet build'
+      inputs:
+        projects: src/*.sln
+        arguments: '--configuration Release'
+
+    - task: DotNetCoreCLI@2
+      displayName: 'dotnet publish'
+      inputs:
+        command: publish
+        publishWebProjects: false
+        projects: src/**/Cpro.Forms.Api.csproj
+        arguments: '--configuration Release --output $(Build.ArtifactStagingDirectory)'
+        
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish API Artifacts'
+      inputs:
+        ArtifactName: 'drop'
+    
+    - task: SonarCloudAnalyze@1
+      displayName: SonarCloud Analyse
+      
+
+  - job: Scan
+    dependsOn: BuildAPI
+    displayName: Scan
+    pool: 
+      vmImage: 'windows-latest'
+
+    steps:
+      - task: DotNetCoreCLI@2
+        displayName: BOM Install
+        inputs:
+          command: 'custom'
+          custom: 'tool'
+          arguments: 'install --global CycloneDX'
+
+      - task: DotNetCoreCLI@2
+        displayName: BOM Create File
+        inputs:
+          command: 'custom'
+          custom: 'CycloneDX'
+          arguments: '-d $(Build.Repository.LocalPath)/src/Cpro.Forms.Api/Cpro.Forms.Api.csproj -o $(Agent.TempDirectory)'
+
+      - task: upload-bom-dtrack-task@1
+        displayName: 'BOM Upload'
+        inputs:
+          bomFilePath: '$(Agent.TempDirectory)/bom.xml'
+          dtrackProjId: '$(projId)'
+          dtrackAPIKey: '$(sbom-api-key)'
+          dtrackURI: 'https://sbom.cumuluspro.net'
+      
+      - task: MicrosoftSecurityDevOps@1
+        displayName: 'MS Security DevOps'
