@@ -16,6 +16,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Common\Peritos.Common.Configuration\Peritos.Common.Configuration.csproj" />
     <ProjectReference Include="..\Cpro.Forms.Integration.Storage\Cpro.Forms.Integration.Storage.csproj" />
+    <ProjectReference Include="..\Cpro.Forms.Service.Models\Cpro.Forms.Service.Models.csproj" />
   </ItemGroup>
 
 </Project>

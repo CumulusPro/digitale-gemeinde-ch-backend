@@ -21,7 +21,8 @@
     <ProjectReference Include="..\Common\Peritos.Common.Configuration\Peritos.Common.Configuration.csproj" />
     <ProjectReference Include="..\Common\Peritos.Common.DependencyInjection\Peritos.Common.DependencyInjection.csproj" />
     <ProjectReference Include="..\Common\Peritos.Common.Mapping\Peritos.Common.Mapping.csproj" />
-    <ProjectReference Include="..\Cpro.Forms.Service\Cpro.Forms.Service.csproj" />
+    <ProjectReference Include="..\Cpro.Forms.Service.Interfaces\Cpro.Forms.Service.Interfaces.csproj" />
+    <ProjectReference Include="..\Cpro.Forms.Service.Models\Cpro.Forms.Service.Models.csproj" />
   </ItemGroup>
 
 </Project>

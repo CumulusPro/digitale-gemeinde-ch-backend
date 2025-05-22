@@ -66,8 +66,6 @@ namespace Cpro.Forms.Service.Infrastructure
             CreateMap<PagingResponse<Tenant>, PagingResponse<Models.Tenant.TenantResponse>>()
                 .ReverseMap();
 
-            CreateMap<Integration.Straatos.Models.DocumentResponse, DocumentResponse>()
-                .ReverseMap();
         }
     }
 

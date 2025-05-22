@@ -1,4 +1,4 @@
-using Cpro.Forms.Integration.Straatos.Models;
+using Cpro.Forms.Service.Models;
 
 namespace Cpro.Forms.Integration.Straatos.Services;
 

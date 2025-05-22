@@ -77,7 +77,15 @@ namespace Peritos.Common.Data
         /// <returns>Empty task</returns>
         public virtual async Task Commit()
         {
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex) 
+            {
+                Console.WriteLine();
+                throw;
+            }
         }
 
         public async Task<T> Delete(T entity, bool commitChanges = true)

@@ -3,7 +3,6 @@ using Peritos.Common.Abstractions.Paging;
 
 namespace Cpro.Forms.Service.Services;
 
-
 public interface IFormTemplateService
 {
     public Task<FormTemplate> CreateFormTemplate(CreateFormTemplateRequest formTemplate, int? tenantId);

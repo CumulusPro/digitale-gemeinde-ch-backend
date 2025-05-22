@@ -166,7 +166,7 @@ public class FormService : IFormService
             if (paymentConfig.isEnabled == 2 && paymentConfig.PaymentCondition != null)
             {
                 dynamic combinedObject, combinedObjectWithFiles;
-                var combinedDict = _straatosApiService.GetIndexFieldObject(jsonData, _mapper.Map<Integration.Straatos.Models.DocumentResponse>(documentResponse), out combinedObject, out combinedObjectWithFiles);
+                var combinedDict = _straatosApiService.GetIndexFieldObject(jsonData, documentResponse, out combinedObject, out combinedObjectWithFiles);
 
                 var conditionField = paymentConfig.PaymentCondition.conditionField;
                 var fieldValue = (combinedDict as IDictionary<string, object>)[conditionField]?.ToString();
@@ -273,7 +273,7 @@ public class FormService : IFormService
     {
         if (_serviceConfig.UseStraatos)
         {
-            return await _straatosApiService.UploadSimple(jsonData, _mapper.Map<Integration.Straatos.Models.DocumentResponse>(documentResponse));
+            return await _straatosApiService.UploadSimple(jsonData, documentResponse);
         }
         else
         {
