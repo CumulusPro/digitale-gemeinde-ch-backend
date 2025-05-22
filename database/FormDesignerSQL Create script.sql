@@ -1,4 +1,4 @@
-/****** Object:  Database [formdesigner-cpro-ch-qa]    Script Date: 5/13/2025 2:26:16 AM ******/
+/****** Object:  Database [formdesigner-cpro-ch-qa]    Script Date: 5/13/2025 2:26:16 AM *****/
 CREATE DATABASE [formdesigner-cpro-ch-qa]
 (EDITION = 'Standard', SERVICE_OBJECTIVE = 'ElasticPool', MAXSIZE = 250 GB)
 WITH CATALOG_COLLATION = SQL_Latin1_General_CP1_CI_AS, LEDGER = OFF;
