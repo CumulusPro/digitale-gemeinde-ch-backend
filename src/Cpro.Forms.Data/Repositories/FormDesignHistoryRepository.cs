@@ -6,13 +6,6 @@ using Peritos.Common.Data;
 
 namespace Cpro.Forms.Data.Repositories;
 
-public interface IFormDesignHistoryRepository : IRepository<FormDesignHistory>
-{
-    public Task<FormDesignHistory> SaveFormDesignHistoryAsync(FormDesignHistory formDesign);
-    public Task<List<FormDesignHistory>> GetAllVersions(string formId);
-    public Task<FormDesignHistory?> GetVersion(string formId, int version);
-}
-
 public class FormDesignHistoryRepository : RepositoryBase<FormDesignHistory, SqlContext>, IFormDesignHistoryRepository
 {
     public FormDesignHistoryRepository(SqlContext context, IRequestContext requestContext = null) : base(context, requestContext)

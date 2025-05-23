@@ -8,15 +8,6 @@ using Peritos.Common.Data.Extensions;
 
 namespace Cpro.Forms.Data.Repositories;
 
-public interface ITenantRepository : IRepository<Tenant>
-{
-    Task<Tenant> CreateTenantAsync(Tenant tenant);
-    Task<Tenant?> GetTenantByIdAsync(int tenantId);
-    Task<PagingResponse<Tenant>> SearchTenants(TenantSearchRequest searchRequest);
-    Task<Tenant> UpdateTenantAsync(Tenant tenant);
-    Task DeleteTenantAsync(Tenant tenant);
-}
-
 public class TenantRepository : RepositoryBase<Tenant, SqlContext>, ITenantRepository
 {
     public TenantRepository(SqlContext context, IRequestContext requestContext = null) : base(context, requestContext)
