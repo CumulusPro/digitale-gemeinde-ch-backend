@@ -8,11 +8,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Cpro.Forms.Integration.SendGrid;
 
-public interface ISendGridService
-{
-    Task SendEmail(EmailDto emailModel);
-}
-
 public class SendGridService : ISendGridService
 {
     private readonly ISendGridConfig _configuration;

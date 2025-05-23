@@ -1,5 +1,8 @@
 namespace Peritos.Common.Abstractions.Paging
 {
+    /// <summary>
+    /// Represents the parameters for paging.
+    /// </summary>
     public class PagingParameters
     {
         public int Page { get; set; } = 1;
