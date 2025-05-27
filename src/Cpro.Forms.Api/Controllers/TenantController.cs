@@ -11,6 +11,11 @@ public class TenantController : Controller
 {
     private readonly ITenantService _tenantService;
 
+    public TenantController(ITenantService tenantService)
+    {
+        _tenantService = tenantService;
+    }
+
     [HttpGet("{id}")]
     public async Task<IActionResult> Get(int id)
     {

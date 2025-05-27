@@ -8,13 +8,11 @@ namespace Cpro.Forms.Service.Services;
 public class TenantDesignService : ITenantDesignService
 {
     private readonly IAzureBlobService _azureBlobService;
-    private const string GroupName = "Formulare";
 
     public TenantDesignService(IAzureBlobService azureBlobService)
     {
         _azureBlobService = azureBlobService;
     }
-
 
     public async Task<TenantDesign> CreateUpdateTenantDesign(TenantDesign design, int tenantId)
     {
@@ -28,7 +26,6 @@ public class TenantDesignService : ITenantDesignService
         }
         return design;
     }
-
 
     public async Task<TenantDesign> GetTenantDesign(int tenantId)
     {

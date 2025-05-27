@@ -28,7 +28,7 @@ public class UserService : IUserService
             ?? throw new KeyNotFoundException($"User to be updated not found with id: {id}");        
 
         user.Role = _mapper.Map<Data.Models.User.Role>(newRole);
-        var updated = await _userRepository.Update(user);
+        var updated = await _userRepository.UpdateUserAsync(user);
         return _mapper.Map<UserResponse>(updated);
     }
 
