@@ -1,193 +1,177 @@
-//using Cpro.Forms.Data.Models;
-//using Cpro.Forms.Data.Repositories;
-//using Microsoft.EntityFrameworkCore;
-//using Moq;
+using Cpro.Forms.Data.Infrastructure;
+using Cpro.Forms.Data.Models;
+using Cpro.Forms.Data.Repositories;
+using Microsoft.EntityFrameworkCore;
 
-//namespace Cpro.Forms.Data.Tests.Repositories;
+namespace Cpro.Forms.Data.Tests.Repositories;
 
-//public class FormTemplateRepositoryTests
-//{
-//    private readonly Mock<FormsDbContext> _dbContextMock;
-//    private readonly FormTemplateRepository _formTemplateRepository;
+public class FormTemplateRepositoryTests
+{
+    private readonly SqlContext _dbContext;
+    private readonly IFormTemplateRepository _repository;
 
-//    public FormTemplateRepositoryTests()
-//    {
-//        var options = new DbContextOptionsBuilder<FormsDbContext>()
-//            .UseInMemoryDatabase(databaseName: "TestDb")
-//            .Options;
-//        _dbContextMock = new Mock<FormsDbContext>(options);
-//        _formTemplateRepository = new FormTemplateRepository(_dbContextMock.Object);
-//    }
+    public FormTemplateRepositoryTests()
+    {
+        var options = new DbContextOptionsBuilder<SqlContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
 
-//    [Fact]
-//    public async Task GetFormTemplate_ReturnsFormTemplate_WhenTemplateExists()
-//    {
-//        // Arrange
-//        var templateId = "test-template-id";
-//        var formTemplate = new FormTemplate
-//        {
-//            TemplateId = templateId,
-//            Data = "{}"
-//        };
+        _dbContext = new SqlContext(options);
+        _repository = new FormTemplateRepository(_dbContext);
+    }
 
-//        var dbSetMock = new Mock<DbSet<FormTemplate>>();
-//        dbSetMock.As<IQueryable<FormTemplate>>()
-//            .Setup(m => m.Provider)
-//            .Returns(new[] { formTemplate }.AsQueryable().Provider);
-//        dbSetMock.As<IQueryable<FormTemplate>>()
-//            .Setup(m => m.Expression)
-//            .Returns(new[] { formTemplate }.AsQueryable().Expression);
-//        dbSetMock.As<IQueryable<FormTemplate>>()
-//            .Setup(m => m.ElementType)
-//            .Returns(new[] { formTemplate }.AsQueryable().ElementType);
-//        dbSetMock.As<IQueryable<FormTemplate>>()
-//            .Setup(m => m.GetEnumerator())
-//            .Returns(new[] { formTemplate }.AsQueryable().GetEnumerator());
+    [Fact]
+    public async Task CreateFormTemplateAsync_ValidTemplate_SavesSuccessfully()
+    {
+        // Arrange
+        var template = new FormTemplate
+        {
+            Id = Guid.NewGuid().ToString(),
+            Name = "Template A"
+        };
 
-//        _dbContextMock.Setup(x => x.FormTemplate)
-//            .Returns(dbSetMock.Object);
+        // Act
+        var result = await _repository.CreateFormTemplateAsync(template);
 
-//        // Act
-//        var result = await _formTemplateRepository.GetFormTemplate(templateId);
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("Template A", result.Name);
+    }
 
-//        // Assert
-//        Assert.NotNull(result);
-//        Assert.Equal(templateId, result.TemplateId);
-//    }
+    [Fact]
+    public async Task GetFormTemplate_ExistingId_ReturnsTemplate()
+    {
+        // Arrange
+        var templateId = Guid.NewGuid().ToString();
+        var template = new FormTemplate
+        {
+            Id = templateId,
+            Name = "Retrieve Me"
+        };
 
-//    [Fact]
-//    public async Task CreateFormTemplate_ReturnsFormTemplate_WhenCreationSuccessful()
-//    {
-//        // Arrange
-//        var templateRequest = new CreateFormTemplateRequest();
-//        var tenantId = 1;
-//        var formTemplate = new FormTemplate
-//        {
-//            TemplateId = "new-template-id",
-//            TenantId = tenantId,
-//            Data = "{}"
-//        };
+        _dbContext.FormTemplates.Add(template);
+        await _dbContext.SaveChangesAsync();
+        _dbContext.Entry(template).State = EntityState.Detached;
 
-//        var dbSetMock = new Mock<DbSet<FormTemplate>>();
-//        _dbContextMock.Setup(x => x.FormTemplate)
-//            .Returns(dbSetMock.Object);
+        // Act
+        var result = await _repository.GetFormTemplate(templateId);
 
-//        // Act
-//        var result = await _formTemplateRepository.CreateFormTemplate(templateRequest, tenantId);
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("Retrieve Me", result.Name);
+    }
 
-//        // Assert
-//        Assert.NotNull(result);
-//        dbSetMock.Verify(x => x.Add(It.IsAny<FormTemplate>()), Times.Once);
-//        _dbContextMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
-//    }
+    [Fact]
+    public async Task UpdateFormTemplateAsync_ExistingId_UpdatesSuccessfully()
+    {
+        // Arrange
+        var templateId = "update-template";
+        var template = new FormTemplate
+        {
+            Id = templateId,
+            Name = "Old Name"
+        };
 
-//    [Fact]
-//    public async Task UpdateFormTemplate_ReturnsFormTemplate_WhenUpdateSuccessful()
-//    {
-//        // Arrange
-//        var templateId = "test-template-id";
-//        var template = new FormTemplate
-//        {
-//            TemplateId = templateId,
-//            Data = "{}"
-//        };
-//        var tenantId = 1;
+        _dbContext.FormTemplates.Add(template);
+        await _dbContext.SaveChangesAsync();
+        _dbContext.Entry(template).State = EntityState.Detached;
 
-//        var dbSetMock = new Mock<DbSet<FormTemplate>>();
-//        dbSetMock.As<IQueryable<FormTemplate>>()
-//            .Setup(m => m.Provider)
-//            .Returns(new[] { template }.AsQueryable().Provider);
-//        dbSetMock.As<IQueryable<FormTemplate>>()
-//            .Setup(m => m.Expression)
-//            .Returns(new[] { template }.AsQueryable().Expression);
-//        dbSetMock.As<IQueryable<FormTemplate>>()
-//            .Setup(m => m.ElementType)
-//            .Returns(new[] { template }.AsQueryable().ElementType);
-//        dbSetMock.As<IQueryable<FormTemplate>>()
-//            .Setup(m => m.GetEnumerator())
-//            .Returns(new[] { template }.AsQueryable().GetEnumerator());
+        template.Name = "Updated Name";
 
-//        _dbContextMock.Setup(x => x.FormTemplate)
-//            .Returns(dbSetMock.Object);
+        // Act
+        var result = await _repository.UpdateFormTemplateAsync(templateId, template);
 
-//        // Act
-//        var result = await _formTemplateRepository.UpdateFormTemplate(templateId, template, tenantId);
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("Updated Name", result.Name);
+    }
 
-//        // Assert
-//        Assert.NotNull(result);
-//        _dbContextMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
-//    }
+    [Fact]
+    public async Task DeleteFormTemplateAsync_ExistingId_DeletesSuccessfully()
+    {
+        // Arrange
+        var templateId = "delete-me";
+        var template = new FormTemplate
+        {
+            Id = templateId,
+            Name = "To Be Deleted"
+        };
 
-//    [Fact]
-//    public async Task DeleteFormTemplate_CompletesSuccessfully_WhenDeletionSuccessful()
-//    {
-//        // Arrange
-//        var templateId = "test-template-id";
-//        var formTemplate = new FormTemplate
-//        {
-//            TemplateId = templateId
-//        };
+        _dbContext.FormTemplates.Add(template);
+        await _dbContext.SaveChangesAsync();
+        _dbContext.Entry(template).State = EntityState.Detached;
 
-//        var dbSetMock = new Mock<DbSet<FormTemplate>>();
-//        dbSetMock.As<IQueryable<FormTemplate>>()
-//            .Setup(m => m.Provider)
-//            .Returns(new[] { formTemplate }.AsQueryable().Provider);
-//        dbSetMock.As<IQueryable<FormTemplate>>()
-//            .Setup(m => m.Expression)
-//            .Returns(new[] { formTemplate }.AsQueryable().Expression);
-//        dbSetMock.As<IQueryable<FormTemplate>>()
-//            .Setup(m => m.ElementType)
-//            .Returns(new[] { formTemplate }.AsQueryable().ElementType);
-//        dbSetMock.As<IQueryable<FormTemplate>>()
-//            .Setup(m => m.GetEnumerator())
-//            .Returns(new[] { formTemplate }.AsQueryable().GetEnumerator());
+        // Act
+        var result = await _repository.DeleteFormTemplateAsync(templateId);
 
-//        _dbContextMock.Setup(x => x.FormTemplate)
-//            .Returns(dbSetMock.Object);
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(templateId, result.Id);
+        Assert.Null(await _dbContext.FormTemplates.FindAsync(templateId));
+    }
 
-//        // Act
-//        await _formTemplateRepository.DeleteFormTemplate(templateId);
+    [Fact]
+    public async Task SearchFormTemplatesAsync_WithKeyword_ReturnsMatchingTemplates()
+    {
+        // Arrange
+        _dbContext.FormTemplates.AddRange(
+            new FormTemplate { Id = "1", Name = "Onboarding" },
+            new FormTemplate { Id = "2", Name = "Exit Survey" },
+            new FormTemplate { Id = "3", Name = "HR Onboarding Checklist" }
+        );
 
-//        // Assert
-//        dbSetMock.Verify(x => x.Remove(It.IsAny<FormTemplate>()), Times.Once);
-//        _dbContextMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
-//    }
+        await _dbContext.SaveChangesAsync();
 
-//    [Fact]
-//    public async Task SearchFormTemplate_ReturnsPagingResponse_WhenTemplatesFound()
-//    {
-//        // Arrange
-//        var searchRequest = new SearchRequest();
-//        var formTemplate = new FormTemplate
-//        {
-//            TemplateId = "test-template-id",
-//            Data = "{}"
-//        };
+        var searchRequest = new SearchRequest
+        {
+            Page = 1,
+            PageSize = 10,
+            Keyword = "Onboarding"
+        };
 
-//        var dbSetMock = new Mock<DbSet<FormTemplate>>();
-//        dbSetMock.As<IQueryable<FormTemplate>>()
-//            .Setup(m => m.Provider)
-//            .Returns(new[] { formTemplate }.AsQueryable().Provider);
-//        dbSetMock.As<IQueryable<FormTemplate>>()
-//            .Setup(m => m.Expression)
-//            .Returns(new[] { formTemplate }.AsQueryable().Expression);
-//        dbSetMock.As<IQueryable<FormTemplate>>()
-//            .Setup(m => m.ElementType)
-//            .Returns(new[] { formTemplate }.AsQueryable().ElementType);
-//        dbSetMock.As<IQueryable<FormTemplate>>()
-//            .Setup(m => m.GetEnumerator())
-//            .Returns(new[] { formTemplate }.AsQueryable().GetEnumerator());
+        // Act
+        var result = await _repository.SearchFormTemplatesAsync(searchRequest);
 
-//        _dbContextMock.Setup(x => x.FormTemplate)
-//            .Returns(dbSetMock.Object);
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(2, result.TotalCount);
+        Assert.All(result.Data, t => Assert.Contains("Onboarding", t.Name));
+    }
 
-//        // Act
-//        var result = await _formTemplateRepository.SearchFormTemplate(searchRequest);
+    [Fact]
+    public async Task GetFormTemplate_NonExistentId_ReturnsNull()
+    {
+        // Act
+        var result = await _repository.GetFormTemplate("non-existent");
 
-//        // Assert
-//        Assert.NotNull(result);
-//        Assert.Equal(1, result.TotalCount);
-//        Assert.Single(result.Items);
-//        Assert.Equal("test-template-id", result.Items[0].TemplateId);
-//    }
-//} 
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task DeleteFormTemplateAsync_NonExistentId_ReturnsNull()
+    {
+        // Act
+        var result = await _repository.DeleteFormTemplateAsync("non-existent");
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task UpdateFormTemplateAsync_NonExistentId_ReturnsNull()
+    {
+        // Arrange
+        var fakeTemplate = new FormTemplate
+        {
+            Id = "non-existent",
+            Name = "Doesn't Matter"
+        };
+
+        // Act
+        var result = await _repository.UpdateFormTemplateAsync("non-existent", fakeTemplate);
+
+        // Assert
+        Assert.Null(result);
+    }
+}

@@ -10,7 +10,7 @@ namespace Peritos.Common.Reflection
         public static Assembly[] GetSolutionAssemblies()
         {
             var assemblies = Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory, "*.dll")
-                                .Where(x => !x.Contains("Microsoft.") && !x.Contains("Azure.") && !x.Contains("System.") && !x.Contains("vcruntime140") && !x.Contains("msvcp140."))
+                                .Where(x => !x.Contains("Microsoft.") && !x.Contains("System.") && !x.Contains("vcruntime140") && !x.Contains("msvcp140."))
                                 .Select(x => Assembly.Load(AssemblyName.GetAssemblyName(x)));
             return assemblies.ToArray();
         }

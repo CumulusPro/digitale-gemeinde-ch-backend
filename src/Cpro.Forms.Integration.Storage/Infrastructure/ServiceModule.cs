@@ -18,7 +18,5 @@ public class ServiceModule : IServiceCollectionModule
                 ? new AzureBlobService(config)
                 : new OnPremStorageService(config);
         });
-
-        services.AddWithTypeFilter(x => x.Name.EndsWith("Service"), ServiceCollectionLifetime.Transient);
     }
 }
