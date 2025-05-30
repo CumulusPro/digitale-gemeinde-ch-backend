@@ -38,70 +38,56 @@ namespace Peritos.Common.Api.Filters
             switch (context.Exception)
             {
                 case ApiException apiEx:
-
                     _logger.LogError(apiEx, "ApiException");
                     context.Result = new JsonResult(ExceptionBody(apiEx.HttpStatusCode, apiEx.Message))
                     {
                         StatusCode = apiEx.HttpStatusCode
                     };
-
                     context.ExceptionHandled = true;
-
                     break;
 
                 case UnauthorizedAccessException authEx:
-
                     _logger.LogError(authEx, "Unauthorized Access Exception");
                     context.Result = new JsonResult(ExceptionBody(403, "user does not have permission to access this resource"))
                     {
                         StatusCode = 403
                     };
-
                     context.ExceptionHandled = true;
-
                     break;
 
                 case KeyNotFoundException keyNotFoundEx:
-
                     _logger.LogError(keyNotFoundEx, "KeyNotFoundException: {Message}", keyNotFoundEx.Message);
                     context.Result = new JsonResult(ExceptionBody(404, "The requested resource was not found"))
                     {
                         StatusCode = 404
                     };
-
                     context.ExceptionHandled = true;
                     break;
 
                 case InvalidOperationException invalidOpEx:
-
                     _logger.LogError(invalidOpEx, "InvalidOperationException: {Message}", invalidOpEx.Message);
                     context.Result = new JsonResult(ExceptionBody(400, "Invalid operation: "))
                     {
                         StatusCode = 400
                     };
-
                     context.ExceptionHandled = true;
                     break;
 
                 case HttpRequestException httpRequestException:
-
                     _logger.LogError(httpRequestException, "HttpRequestException: {Message}", httpRequestException.Message);
                     context.Result = new JsonResult(ExceptionBody(400, "Invalid operation: "))
                     {
                         StatusCode = 400
                     };
-
                     context.ExceptionHandled = true;
                     break;
 
                 default:
-
                     _logger.LogError(context.Exception, "Exception");
                     context.Result = new JsonResult(ExceptionBody(500, context.Exception.Message))
                     {
                         StatusCode = 500
                     };
-
                     break;
             }
         }
