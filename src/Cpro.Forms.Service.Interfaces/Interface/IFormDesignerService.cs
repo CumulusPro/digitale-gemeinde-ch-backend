@@ -13,4 +13,5 @@ public interface IFormDesignerService
     Task<FormDesign> DuplicateFormDefinitionAsync(string formId, string email);
     Task<PagingResponse<FormDesign>> SearchFormDesignsAsync(SearchRequest searchRequest, int tenantId);
     Task ActivateFormDefinitionAsync(string formId, bool isActive, int? tenantId);
+    Task<List<string>> GetAllDistinctTagNamesAsync();
 }

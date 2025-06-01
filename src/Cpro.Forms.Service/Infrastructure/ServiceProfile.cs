@@ -30,12 +30,12 @@ namespace Cpro.Forms.Service.Infrastructure
             CreateMap<PagingResponse<FormTemplate>, PagingResponse<Data.Models.FormTemplate>>()
                 .ReverseMap();
 
-            CreateMap<FormDesign, Data.Models.FormDesign>()
-                .ForMember(x => x.Tags, opt => opt.MapFrom(y => Helper.Join(y.tags, '|')));
-
             CreateMap<Data.Models.FormDesign, FormDesign>()
-                .ForMember(x => x.tags, opt => opt.MapFrom(y => Helper.Split(y.Tags, '|')))
-                .ForMember(x => x.id, opt => opt.MapFrom(y => y.Id));
+                .ForMember(dest => dest.tags, opt => opt.MapFrom(src => src.Tags.Select(t => t.Tag.TagName)))
+                .ForMember(dest => dest.id, opt => opt.MapFrom(src => src.Id));
+
+            CreateMap<FormDesign, Data.Models.FormDesign>()
+                .ForMember(dest => dest.Tags, opt => opt.Ignore()); // handled manually
 
             CreateMap<PagingResponse<FormDesign>, PagingResponse<Data.Models.FormDesign>>()
                 .ReverseMap();
@@ -68,19 +68,5 @@ namespace Cpro.Forms.Service.Infrastructure
 
         }
     }
-
-    public class Helper
-    {
-        public static List<string> Split(string input, char separator)
-        {
-            return input.Split(separator).ToList();
-        }
-        public static string Join(List<string> input, char separator)
-        {
-            return string.Join(separator, input);
-        }
-        
-    }
-
 }
 

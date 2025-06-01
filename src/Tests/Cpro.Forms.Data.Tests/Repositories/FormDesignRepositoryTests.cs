@@ -24,12 +24,22 @@ public class FormDesignRepositoryTests
     public async Task CreateFormDesignAsync_ValidInput_SavesSuccessfully()
     {
         // Arrange
+        var tag = new Tag { TagName = "TagA" };
+        await _dbContext.Tags.AddAsync(tag);
+        await _dbContext.SaveChangesAsync();
+
         var formDesign = new FormDesign
         {
             Id = Guid.NewGuid().ToString(),
             Name = "Form A",
             TenantId = 1,
-            Tags = "TagA",
+            Tags = new List<FormDesignTag>
+            {
+                new FormDesignTag
+                {
+                    TagId = tag.TagId
+                }
+            },
             TenantName = "Test Tenant",
         };
 
@@ -40,6 +50,8 @@ public class FormDesignRepositoryTests
         Assert.NotNull(result);
         Assert.Equal("Form A", result.Name);
         Assert.True(result.DateCreated <= DateTimeOffset.UtcNow);
+        Assert.Single(result.Tags);
+        Assert.Equal("TagA", result.Tags.First().Tag.TagName);
     }
 
     [Fact]
@@ -165,15 +177,24 @@ public class FormDesignRepositoryTests
     {
         // Arrange
         var tenantId = 1;
-        _dbContext.FormDesigns.Add(new FormDesign
+
+        var tag = new Tag { TagName = "HR" };
+        await _dbContext.Tags.AddAsync(tag);
+        await _dbContext.SaveChangesAsync();
+
+        var formDesign = new FormDesign
         {
             Id = "search-1",
             Name = "Onboarding Form",
-            Tags = "HR",
             TenantId = tenantId,
             TenantName = "Test Tenant",
-        });
+            Tags = new List<FormDesignTag>
+            {
+                new FormDesignTag { TagId = tag.TagId }
+            }
+        };
 
+        _dbContext.FormDesigns.Add(formDesign);
         await _dbContext.SaveChangesAsync();
 
         var searchRequest = new SearchRequest
@@ -190,6 +211,7 @@ public class FormDesignRepositoryTests
         Assert.NotNull(result);
         Assert.Equal(1, result.TotalCount);
         Assert.Single(result.Data);
+        Assert.Equal("Onboarding Form", result.Data.First().Name);
     }
 
     [Fact]

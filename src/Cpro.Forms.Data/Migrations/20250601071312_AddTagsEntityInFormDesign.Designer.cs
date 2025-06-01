@@ -4,6 +4,7 @@ using Cpro.Forms.Data.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Cpro.Forms.Data.Migrations
 {
     [DbContext(typeof(SqlContext))]
-    partial class SqlContextModelSnapshot : ModelSnapshot
+    [Migration("20250601071312_AddTagsEntityInFormDesign")]
+    partial class AddTagsEntityInFormDesign
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -44,7 +47,7 @@ namespace Cpro.Forms.Data.Migrations
 
                     b.HasIndex("FormDesignId");
 
-                    b.ToTable("Designer", (string)null);
+                    b.ToTable("Designer");
                 });
 
             modelBuilder.Entity("Cpro.Forms.Data.Models.DesignerHistory", b =>
@@ -69,7 +72,7 @@ namespace Cpro.Forms.Data.Migrations
 
                     b.HasIndex("FormDesignId");
 
-                    b.ToTable("DesignerHistory", (string)null);
+                    b.ToTable("DesignerHistory");
                 });
 
             modelBuilder.Entity("Cpro.Forms.Data.Models.FormData", b =>
@@ -110,7 +113,7 @@ namespace Cpro.Forms.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("FormDatas", (string)null);
+                    b.ToTable("FormDatas");
                 });
 
             modelBuilder.Entity("Cpro.Forms.Data.Models.FormDesign", b =>
@@ -152,7 +155,7 @@ namespace Cpro.Forms.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("FormDesigns", (string)null);
+                    b.ToTable("FormDesigns");
                 });
 
             modelBuilder.Entity("Cpro.Forms.Data.Models.FormDesignHistory", b =>
@@ -196,7 +199,7 @@ namespace Cpro.Forms.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("FormDesignsHistory", (string)null);
+                    b.ToTable("FormDesignsHistory");
                 });
 
             modelBuilder.Entity("Cpro.Forms.Data.Models.FormDesignTag", b =>
@@ -211,7 +214,7 @@ namespace Cpro.Forms.Data.Migrations
 
                     b.HasIndex("TagId");
 
-                    b.ToTable("FormDesignTags", (string)null);
+                    b.ToTable("FormDesignTags");
                 });
 
             modelBuilder.Entity("Cpro.Forms.Data.Models.FormStatesConfig", b =>
@@ -238,7 +241,7 @@ namespace Cpro.Forms.Data.Migrations
 
                     b.HasIndex("FormDesignId");
 
-                    b.ToTable("FormStatesConfig", (string)null);
+                    b.ToTable("FormStatesConfig");
                 });
 
             modelBuilder.Entity("Cpro.Forms.Data.Models.FormStatesConfigHistory", b =>
@@ -268,7 +271,7 @@ namespace Cpro.Forms.Data.Migrations
 
                     b.HasIndex("FormDesignId");
 
-                    b.ToTable("FormStatesConfigHistory", (string)null);
+                    b.ToTable("FormStatesConfigHistory");
                 });
 
             modelBuilder.Entity("Cpro.Forms.Data.Models.FormTemplate", b =>
@@ -294,7 +297,7 @@ namespace Cpro.Forms.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("FormTemplates", (string)null);
+                    b.ToTable("FormTemplates");
                 });
 
             modelBuilder.Entity("Cpro.Forms.Data.Models.Processor", b =>
@@ -316,7 +319,7 @@ namespace Cpro.Forms.Data.Migrations
 
                     b.HasIndex("FormDesignId");
 
-                    b.ToTable("Processor", (string)null);
+                    b.ToTable("Processor");
                 });
 
             modelBuilder.Entity("Cpro.Forms.Data.Models.ProcessorHistory", b =>
@@ -341,7 +344,7 @@ namespace Cpro.Forms.Data.Migrations
 
                     b.HasIndex("FormDesignId");
 
-                    b.ToTable("ProcessorHistory", (string)null);
+                    b.ToTable("ProcessorHistory");
                 });
 
             modelBuilder.Entity("Cpro.Forms.Data.Models.Tag", b =>
@@ -361,7 +364,7 @@ namespace Cpro.Forms.Data.Migrations
                     b.HasIndex("TagName")
                         .IsUnique();
 
-                    b.ToTable("Tags", (string)null);
+                    b.ToTable("Tags");
                 });
 
             modelBuilder.Entity("Cpro.Forms.Data.Models.Tenant.Tenant", b =>
@@ -399,7 +402,7 @@ namespace Cpro.Forms.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Tenants", (string)null);
+                    b.ToTable("Tenants");
                 });
 
             modelBuilder.Entity("Cpro.Forms.Data.Models.User.User", b =>
@@ -451,7 +454,7 @@ namespace Cpro.Forms.Data.Migrations
 
                     b.HasIndex("TenantId");
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("Cpro.Forms.Data.Models.Designer", b =>

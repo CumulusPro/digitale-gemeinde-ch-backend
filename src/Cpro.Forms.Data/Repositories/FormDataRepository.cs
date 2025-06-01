@@ -96,12 +96,13 @@ public class FormDataRepository : RepositoryBase<FormData, SqlContext>, IFormDat
 
     public async Task<string> GetNextSequenceDocumentId()
     {
-        var docId = await _context
-                    .Set<NextValResult>()
-                    .FromSqlRaw("SELECT NEXT VALUE FOR dbo.DocumentIdSequence AS Value")
-                    .AsNoTracking()
-                    .FirstAsync();
+        using var command = _context.Database.GetDbConnection().CreateCommand();
+        command.CommandText = "SELECT NEXT VALUE FOR dbo.DocumentIdSequence";
+        command.CommandType = System.Data.CommandType.Text;
 
-        return docId.Value.ToString();
+        await _context.Database.OpenConnectionAsync();
+
+        var result = await command.ExecuteScalarAsync();
+        return result.ToString();
     }
 }

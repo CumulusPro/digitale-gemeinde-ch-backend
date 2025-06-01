@@ -16,7 +16,7 @@ public class FormDesign
     public string? CreatedBy { get; set; }
     public DateTimeOffset DateCreated { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? DateUpdated { get; set; }
-    public string? Tags { get; set; }
+    public ICollection<FormDesignTag> Tags { get; set; } = new List<FormDesignTag>();
 }
 
 public class FormStatesConfig
@@ -39,4 +39,20 @@ public class Processor
     public int Id { get; set; }
     public int ProcessorId { get; set; }
     public string FormDesignId { get; set; }
+}
+
+public class Tag
+{
+    public int TagId { get; set; }
+    public string TagName { get; set; } = null!;
+    public ICollection<FormDesignTag> FormDesignTags { get; set; } = new List<FormDesignTag>();
+}
+
+public class FormDesignTag
+{
+    public string FormDesignId { get; set; }
+    public FormDesign FormDesign { get; set; } = null!;
+
+    public int TagId { get; set; }
+    public Tag Tag { get; set; } = null!;
 }

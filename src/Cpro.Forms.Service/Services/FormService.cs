@@ -159,53 +159,67 @@ public class FormService : IFormService
         jsonData.data.FormTitle = documentResponse.Name;
         string? documentId = await GetDocumentId(jsonData, documentResponse);
 
-        if (documentResponse.paymentConfig != null && (documentResponse.paymentConfig.isEnabled != 0))
+        var paymentResponse = await HandlePaymentIfNeeded(jsonData, origin, documentResponse, documentId);
+
+        if (paymentResponse != null)
+            return paymentResponse;
+
+        await SendEmailIfConfigured(documentResponse, documentId);
+
+        await SaveFormData(jsonData, documentResponse, documentId);
+
+        return new FormResponse() { documentId = documentId };
+    }
+
+    private async Task<FormResponse?> HandlePaymentIfNeeded(dynamic jsonData, string origin, DocumentResponse documentResponse, string documentId)
+    {
+        var paymentConfig = documentResponse.paymentConfig;
+        if (paymentConfig == null || paymentConfig.isEnabled == 0)
+            return null;
+
+        if (paymentConfig.isEnabled == 2 && paymentConfig.PaymentCondition != null)
         {
-            var paymentConfig = documentResponse.paymentConfig;
+            dynamic combinedObject, combinedObjectWithFiles;
+            var combinedDict = _straatosApiService.GetIndexFieldObject(jsonData, documentResponse, out combinedObject, out combinedObjectWithFiles);
+            var conditionField = paymentConfig.PaymentCondition.conditionField;
+            var fieldValue = (combinedDict as IDictionary<string, object>)[conditionField]?.ToString();
+            var conditionValue = paymentConfig.PaymentCondition.conditionValue;
 
-            if (paymentConfig.isEnabled == 2 && paymentConfig.PaymentCondition != null)
+            var conditionMatched = paymentConfig.PaymentCondition.operatorField switch
             {
-                dynamic combinedObject, combinedObjectWithFiles;
-                var combinedDict = _straatosApiService.GetIndexFieldObject(jsonData, documentResponse, out combinedObject, out combinedObjectWithFiles);
+                "=" => fieldValue == conditionValue,
+                "!=" => fieldValue != conditionValue,
+                "startswith" => fieldValue?.StartsWith(conditionValue) ?? false,
+                "contains" => fieldValue?.Contains(conditionValue) ?? false,
+                "substring" => conditionValue?.Contains(fieldValue) ?? false,
+                _ => false
+            };
 
-                var conditionField = paymentConfig.PaymentCondition.conditionField;
-                var fieldValue = (combinedDict as IDictionary<string, object>)[conditionField]?.ToString();
-                var conditionValue = paymentConfig.PaymentCondition.conditionValue;
-
-                bool conditionMatched = paymentConfig.PaymentCondition.operatorField switch
-                {
-                    "=" => fieldValue == conditionValue,
-                    "!=" => fieldValue != conditionValue,
-                    "startswith" => fieldValue?.StartsWith(conditionValue) ?? false,
-                    "contains" => fieldValue?.Contains(conditionValue) ?? false,
-                    "substring" => conditionValue?.Contains(fieldValue) ?? false,
-                    _ => false
-                };
-
-                if (!conditionMatched)
-                {
-                    return new FormResponse { documentId = documentId };
-                }
-            }
-
-            var paymentUrl = await _paymentService.CreatePaymentRequest(new PaymentRequest()
-            {
-                amount = paymentConfig.amount.ToString(),
-                currency = paymentConfig.currency,
-                apikey = paymentConfig.apiKey,
-                referenceId = documentId,
-                formId = jsonData.formId,
-                tenantId = jsonData.tenantId,
-                baseurl = origin,
-                instance = paymentConfig.instance
-            });
-
-            return new FormResponse() { documentId = documentId, redirectUrl = paymentUrl };
+            if (!conditionMatched)
+                return new FormResponse { documentId = documentId };
         }
 
+        var paymentUrl = await _paymentService.CreatePaymentRequest(new PaymentRequest
+        {
+            amount = paymentConfig.amount.ToString(),
+            currency = paymentConfig.currency,
+            apikey = paymentConfig.apiKey,
+            referenceId = documentId,
+            formId = jsonData.formId,
+            tenantId = jsonData.tenantId,
+            baseurl = origin,
+            instance = paymentConfig.instance
+        });
+
+        return new FormResponse { documentId = documentId, redirectUrl = paymentUrl };
+    }
+
+    private async Task SendEmailIfConfigured(DocumentResponse documentResponse, string documentId)
+    {
         if (documentResponse.emailNotificationConfig.notificationEnabled ?? false)
         {
-            var emailBody = documentResponse.emailNotificationConfig.emailsBody?.Replace("documenturl", $"{documentResponse.emailNotificationConfig.baseurl}/new-task-details?newUI=true&documentId={documentId}&isArchiveTask=false");
+            var emailBody = documentResponse.emailNotificationConfig.emailsBody?
+                .Replace("documenturl", $"{documentResponse.emailNotificationConfig.baseurl}/new-task-details?newUI=true&documentId={documentId}&isArchiveTask=false");
 
             await _sendgridService.SendEmail(new Integration.SendGrid.Dto.EmailDto()
             {
@@ -214,7 +228,10 @@ public class FormService : IFormService
                 Subject = documentResponse.emailNotificationConfig.emailsSubject,
             });
         }
+    }
 
+    private async Task SaveFormData(dynamic jsonData, DocumentResponse documentResponse, string documentId)
+    {
         var formData = new Data.Models.FormData()
         {
             Id = Guid.NewGuid().ToString(),
@@ -229,8 +246,6 @@ public class FormService : IFormService
         };
 
         await _formDataRepository.CreateFormDataAsync(formData);
-
-        return new FormResponse() { documentId = documentId };
     }
 
     public async Task<DocumentResponse> UpdateFormStatus(int? tenantId, string formId,string documentId, string status)

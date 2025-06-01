@@ -123,4 +123,12 @@ public class FormDefinitionController : Controller
 
         return Ok(result);
     }
+
+    [HttpGet("get-distinct-tags")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetAllDistinctTags()
+    {
+        var response = await _formService.GetAllDistinctTagNamesAsync();
+        return Ok(response);
+    }
 }

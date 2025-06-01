@@ -66,6 +66,23 @@ public class SqlContext : BaseContext<SqlContext>
                     .HasForeignKey(u => u.TenantId)
                     .OnDelete(DeleteBehavior.Restrict);
 
+        modelBuilder.Entity<FormDesignTag>()
+            .HasKey(fdt => new { fdt.FormDesignId, fdt.TagId });
+
+        modelBuilder.Entity<FormDesignTag>()
+            .HasOne(fdt => fdt.FormDesign)
+            .WithMany(fd => fd.Tags)
+            .HasForeignKey(fdt => fdt.FormDesignId);
+
+        modelBuilder.Entity<FormDesignTag>()
+            .HasOne(fdt => fdt.Tag)
+            .WithMany(t => t.FormDesignTags)
+            .HasForeignKey(fdt => fdt.TagId);
+
+        modelBuilder.Entity<Tag>()
+            .HasIndex(t => t.TagName)
+            .IsUnique();
+
         modelBuilder.HasSequence<int>("DocumentIdSequence", schema: "dbo")
             .StartsAt(100000)
             .IncrementsBy(1);
@@ -79,4 +96,6 @@ public class SqlContext : BaseContext<SqlContext>
     public DbSet<FormData> FormDatas { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<Tenant> Tenants { get; set; }
+    public DbSet<Tag> Tags { get; set; }
+    public DbSet<FormDesignTag> FormDesignTags { get; set; }
 }

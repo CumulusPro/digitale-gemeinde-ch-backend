@@ -167,6 +167,11 @@ public class FormDesignerService : IFormDesignerService
                 Value = s.Value,
                 FormDesignId = newFormId
             })?.ToList(),
+            Tags = originalForm.Tags?.Select(tag => new Data.Models.FormDesignTag
+            {
+                TagId = tag.TagId,
+                FormDesignId = newFormId
+            }).ToList() ?? new List<Data.Models.FormDesignTag>(),
             CreatedBy = email
         };
 
@@ -209,6 +214,11 @@ public class FormDesignerService : IFormDesignerService
 
         formDesign.IsActive = isActive;
         await _formDesignRepository.UpdateFormDesignAsync(formId, formDesign);
+    }
+
+    public async Task<List<string>> GetAllDistinctTagNamesAsync()
+    {
+        return await _formDesignRepository.GetAllDistinctTagNamesAsync();
     }
 
     private string MapFieldType(string datatype)
@@ -270,7 +280,7 @@ public class FormDesignerService : IFormDesignerService
             Processors = MapToProcessors(fieldRequest.processors, newFormId),
             FormStates = MapToFormStates(fieldRequest.formStatesConfig, newFormId),
             CreatedBy = email,
-            Tags = string.Join("|", fieldRequest.tags ?? new List<string>())
+            Tags = await GetOrCreateTagsAsync(fieldRequest.tags, newFormId)
         };
 
         return await _formDesignRepository.CreateFormDesignAsync(formDesign);
@@ -280,7 +290,13 @@ public class FormDesignerService : IFormDesignerService
     private async Task<Data.Models.FormDesign?> UpdateFormDesignAsync(FieldRequest fieldRequest, string formId, Data.Models.FormDesign formDesign)
     {
         formDesign.Name = fieldRequest.DocumentTypeName;
-        formDesign.Tags = string.Join("|", fieldRequest.tags ?? new List<string>());
+
+        // Update tags
+        formDesign.Tags.Clear();
+        var newTags = await GetOrCreateTagsAsync(fieldRequest.tags, formId);
+
+        foreach (var tag in newTags)
+            formDesign.Tags.Add(tag);
 
         var incomingDesigners = MapToDesigners(fieldRequest.designers, formId);
         var incomingProcessors = MapToProcessors(fieldRequest.processors, formId);
@@ -322,6 +338,35 @@ public class FormDesignerService : IFormDesignerService
             Value = state.value,
             FormDesignId = formId
         }).ToList();
+    }
+
+    private async Task<List<Data.Models.FormDesignTag>> GetOrCreateTagsAsync(List<string>? tags, string formDesignId)
+    {
+        var result = new List<Data.Models.FormDesignTag>();
+        if (tags == null || !tags.Any()) return result;
+
+        var existingTags = await _formDesignRepository.GetTagsByNamesAsync(tags);
+        var existingTagNames = existingTags.Select(t => t.TagName).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        // Create missing tags
+        var newTags = tags
+            .Where(t => !existingTagNames.Contains(t))
+            .Select(t => new Data.Models.Tag { TagName = t })
+            .ToList();
+
+        await _formDesignRepository.AddTagsAsync(newTags);
+        existingTags.AddRange(newTags);
+
+        foreach (var tag in existingTags)
+        {
+            result.Add(new Data.Models.FormDesignTag
+            {
+                TagId = tag.TagId,
+                FormDesignId = formDesignId
+            });
+        }
+
+        return result;
     }
 
     private void SyncCollection<T>(List<T> existing, List<T> incoming, Func<T, object> keySelector)
