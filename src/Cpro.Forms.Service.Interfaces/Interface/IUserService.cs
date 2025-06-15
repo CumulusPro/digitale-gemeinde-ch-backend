@@ -1,3 +1,4 @@
+using Cpro.Forms.Service.Models;
 using Cpro.Forms.Service.Models.Enums;
 using Cpro.Forms.Service.Models.User;
 using Peritos.Common.Abstractions.Paging;
@@ -12,4 +13,6 @@ public interface IUserService
     Task DeleteUserAsync(Guid id);
     Task<UserResponse> AssignUserRoleAsync(Guid id, Role newRole, string loggedUserEmail);
     Task<PagingResponse<UserResponse>> SearchUsers(UserSearchRequest searchRequest);
+    Task<List<TenantResponse>> GetTenantsByUserEmailAsync(string email);
+    Task<UserResponse?> GetUserByEmailAndTenantAsync(string email, int tenantId);
 }

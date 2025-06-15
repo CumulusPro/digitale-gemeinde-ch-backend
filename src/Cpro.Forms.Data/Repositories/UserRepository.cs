@@ -24,9 +24,14 @@ public class UserRepository : RepositoryBase<User, SqlContext>, IUserRepository
         await Delete(user);
     }
 
-    public async Task<User?> GetUserByEmailAsync(string email)
+    public async Task<List<User>> GetUsersByEmailAsync(string email)
     {
-        return await Get(x => x.Email == email);
+        return await GetAll(x => x.Email == email)?.ToListAsync() ?? new List<User>();
+    }
+
+    public async Task<User?> GetUserByEmailAndTenantAsync(string email, int tenantId)
+    {
+        return await Get(u => u.Email == email && u.TenantId == tenantId);
     }
 
     public async Task<User?> GetUserByIdAsync(Guid id)
@@ -46,6 +51,15 @@ public class UserRepository : RepositoryBase<User, SqlContext>, IUserRepository
         if (!string.IsNullOrWhiteSpace(searchRequest.FirstName))
         {
             query = query.Where(u => u.Email.Contains(searchRequest.FirstName));
+        }
+
+        if (searchRequest.TenantId.HasValue)
+        {
+            query = query.Where(u => u.TenantId == searchRequest.TenantId.Value);
+        }
+        if (searchRequest.Role.HasValue)
+        {
+            query = query.Where(u => u.Role == searchRequest.Role.Value);
         }
 
         var totalItemCount = await query.CountAsync();

@@ -53,7 +53,7 @@ public class SqlContext : BaseContext<SqlContext>
                     .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<User>()
-                    .HasIndex(u => u.Email)
+                    .HasIndex(u => new { u.TenantId, u.Email })
                     .IsUnique();
 
         modelBuilder.Entity<Tenant>()

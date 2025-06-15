@@ -80,11 +80,11 @@ public class UserRepositoryTests
         _dbContext.Entry(user).State = EntityState.Detached;
 
         // Act
-        var result = await _userRepository.GetUserByEmailAsync("search.me@example.com");
+        var result = await _userRepository.GetUsersByEmailAsync("search.me@example.com");
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal("Search", result.FirstName);
+        Assert.Equal("Search", result.First().FirstName);
     }
 
     [Fact]

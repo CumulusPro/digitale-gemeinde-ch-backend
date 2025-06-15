@@ -278,4 +278,22 @@ public class FormDefinitionControllerTests
         var returnValue = Assert.IsType<FormDesign>(okResult.Value);
         Assert.Equal(expectedResponse, returnValue);
     }
-} 
+
+    [Fact]
+    public async Task GetAllDistinctTags_ReturnsOkResult_WithTagList()
+    {
+        // Arrange
+        var expectedTags = new List<string> { "HR", "Finance", "IT" };
+        _formServiceMock.Setup(x => x.GetAllDistinctTagNamesAsync())
+            .ReturnsAsync(expectedTags);
+
+        // Act
+        var result = await _controller.GetAllDistinctTags();
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var returnValue = Assert.IsType<List<string>>(okResult.Value);
+        Assert.Equal(expectedTags.Count, returnValue.Count);
+        Assert.Equal(expectedTags, returnValue);
+    }
+}

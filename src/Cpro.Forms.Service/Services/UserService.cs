@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
+using Cpro.Forms.Data.Models.Tenant;
 using Cpro.Forms.Data.Models.User;
 using Cpro.Forms.Data.Repositories;
+using Cpro.Forms.Service.Models;
 using Cpro.Forms.Service.Models.User;
 using Peritos.Common.Abstractions.Paging;
 
@@ -9,23 +11,25 @@ namespace Cpro.Forms.Service.Services;
 public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
+    private readonly ITenantRepository _tenantRepository;
     private readonly IMapper _mapper;
 
-    public UserService(IUserRepository userRepository, IMapper mapper)
+    public UserService(IUserRepository userRepository, IMapper mapper, ITenantRepository tenantRepository)
     {
         _userRepository = userRepository;
         _mapper = mapper;
+        _tenantRepository = tenantRepository;
     }
 
     public async Task<UserResponse> AssignUserRoleAsync(Guid id, Models.Enums.Role newRole, string loggedUserEmail)
     {
-        var loggerUser = await _userRepository.GetUserByEmailAsync(loggedUserEmail);
+        var user = await _userRepository.GetUserByIdAsync(id)
+            ?? throw new KeyNotFoundException($"User to be updated not found with id: {id}");
+
+        var loggerUser = await _userRepository.GetUserByEmailAndTenantAsync(loggedUserEmail, user.TenantId);
 
         if (loggerUser?.Role != Role.Admin)
             throw new UnauthorizedAccessException("Only Admins can assign roles.");
-
-        var user = await _userRepository.GetUserByIdAsync(id)
-            ?? throw new KeyNotFoundException($"User to be updated not found with id: {id}");        
 
         user.Role = _mapper.Map<Data.Models.User.Role>(newRole);
         var updated = await _userRepository.UpdateUserAsync(user);
@@ -47,6 +51,26 @@ public class UserService : IUserService
             ?? throw new KeyNotFoundException($"User not found with id: {id}");
 
         await _userRepository.DeleteUserAsync(user);
+    }
+
+    public async Task<List<TenantResponse>> GetTenantsByUserEmailAsync(string email)
+    {
+        var users = await _userRepository.GetUsersByEmailAsync(email);
+        var tenantIds = users.Select(u => u.TenantId).Distinct().ToList();
+
+        var tenants = new List<Tenant>();
+        foreach (var tId in tenantIds)
+        {
+            var tenant = await _tenantRepository.GetTenantByIdAsync(tId);
+            if (tenant != null)
+                tenants.Add(tenant);
+        }
+
+        return tenants.Select(t => new TenantResponse
+        {
+            Id = t.TenantId,
+            Name = t.TenantName
+        }).ToList();
     }
 
     public async Task<UserResponse?> GetUserByIdAsync(Guid id)

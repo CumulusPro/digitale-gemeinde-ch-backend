@@ -289,7 +289,7 @@ public class FormDesignerService : IFormDesignerService
 
     private async Task<Data.Models.FormDesign?> UpdateFormDesignAsync(FieldRequest fieldRequest, string formId, Data.Models.FormDesign formDesign)
     {
-        formDesign.Name = fieldRequest.DocumentTypeName;
+        formDesign.Name = fieldRequest.Name;
 
         // Update tags
         formDesign.Tags.Clear();

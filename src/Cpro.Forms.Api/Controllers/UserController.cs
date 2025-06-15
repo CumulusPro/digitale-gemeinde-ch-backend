@@ -20,6 +20,17 @@ public class UserController : Controller
         _httpContextAccessor = httpContextAccessor;
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetUser(int tenantId)
+    {
+        var claims = _httpContextAccessor.HttpContext?.User?.Claims;
+        var email = claims?.FirstOrDefault(c => c.Type == "emails")?.Value
+                 ?? claims?.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+
+        var user = await _userService.GetUserByEmailAndTenantAsync(email, tenantId);
+        return user == null ? NotFound() : Ok(user);
+    }
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetUserById(Guid id)
     {
@@ -64,5 +75,16 @@ public class UserController : Controller
     {
         var users = await _userService.SearchUsers(searchRequest);
         return Ok(users);
+    }
+
+    [HttpGet("tenants")]
+    public async Task<IActionResult> GetTenantsByEmail()
+    {
+        var claims = _httpContextAccessor.HttpContext?.User?.Claims;
+        var email = claims?.FirstOrDefault(c => c.Type == "emails")?.Value
+                 ?? claims?.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+
+        var list = await _userService.GetTenantsByUserEmailAsync(email);
+        return Ok(list);
     }
 }

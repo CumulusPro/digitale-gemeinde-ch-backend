@@ -8,6 +8,7 @@ using Cpro.Forms.Service.Services;
 using Newtonsoft.Json;
 using Peritos.Common.Abstractions;
 using Peritos.Common.Abstractions.Paging;
+using System.Dynamic;
 
 namespace Cpro.Forms.Service.Tests.Services;
 
@@ -185,4 +186,98 @@ public class FormServiceTests
         _formDataRepositoryMock.Verify(x => x.SearchFormDatasAsync(It.IsAny<Data.Models.FormSearchRequest>(), tenantId), Times.Once);
         _mapperMock.Verify(x => x.Map<PagingResponse<FormData>>(It.IsAny<PagingResponse<Data.Models.FormData>>()), Times.Once);
     }
-} 
+
+    [Fact]
+    public async Task SubmitTaskAsync_PaymentDisabled_SendsEmailAndSavesFormData()
+    {
+        // Arrange
+        dynamic jsonData = new ExpandoObject();
+        jsonData.formId = "form1";
+        jsonData.tenantId = 1;
+        jsonData.data = new ExpandoObject();
+        jsonData.data.FormId = jsonData.formId;
+
+        var documentResponse = new DocumentResponse
+        {
+            Name = "Test Form",
+            paymentConfig = new PaymentConfig { isEnabled = 0 },
+            emailNotificationConfig = new EmailNotificationConfig
+            {
+                notificationEnabled = true,
+                emailsTo = "test@example.com",
+                emailsSubject = "Subject",
+                emailsBody = "Body documenturl",
+                baseurl = "http://baseurl"
+            }
+        };
+
+        _formDesignerServiceMock
+            .Setup(x => x.GetFormDefinitionResponseAsync("form1", 1))
+            .ReturnsAsync(documentResponse);
+
+        _serviceConfigMock.Setup(x => x.UseStraatos).Returns(false);
+        _formDataRepositoryMock.Setup(x => x.GetNextSequenceDocumentId())
+            .ReturnsAsync("doc123");
+
+        _sendgridServiceMock.Setup(x => x.SendEmail(It.IsAny<Integration.SendGrid.Dto.EmailDto>()))
+            .Returns(Task.CompletedTask);
+
+        _formDataRepositoryMock.Setup(x => x.CreateFormDataAsync(It.IsAny<Data.Models.FormData>()))
+            .ReturnsAsync(new Data.Models.FormData());
+
+        // Act
+        var result = await _formService.SubmitTaskAsync(jsonData, "http://origin");
+
+        // Assert
+        Assert.Equal("doc123", result.documentId);
+        Assert.Null(result.redirectUrl);
+        _sendgridServiceMock.Verify(x => x.SendEmail(It.IsAny<Integration.SendGrid.Dto.EmailDto>()), Times.Once);
+        _formDataRepositoryMock.Verify(x => x.CreateFormDataAsync(It.IsAny<Data.Models.FormData>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetCurrentUserDetails_ReturnsCurrentUser_FromStraatos()
+    {
+        // Arrange
+        _serviceConfigMock.Setup(x => x.UseStraatos).Returns(true);
+        _requestContextMock.SetupGet(x => x.Token).Returns("token");
+
+        var userJson = JsonConvert.SerializeObject(new CurrentUser { Id = 1, Emails = new List<string> { "test@example.com" } });
+        _straatosApiServiceMock.Setup(x => x.GetCurrentUser("token")).ReturnsAsync(userJson);
+
+        // Act
+        var result = await InvokePrivateMethodAsync<CurrentUser>(_formService, "GetCurrentUserDetails");
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(1, result.Id);
+        Assert.Contains("test@example.com", result.Emails);
+    }
+
+    [Fact]
+    public async Task GetCurrentUserDetails_ReturnsCurrentUser_FromRequestContext()
+    {
+        // Arrange
+        _serviceConfigMock.Setup(x => x.UseStraatos).Returns(false);
+        _requestContextMock.Setup(x => x.UserId).Returns(5);
+        _requestContextMock.Setup(x => x.UserEmail).Returns("user@example.com");
+
+        // Act
+        var result = await InvokePrivateMethodAsync<CurrentUser>(_formService, "GetCurrentUserDetails");
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(5, result.Id);
+        Assert.Contains("user@example.com", result.Emails);
+    }
+
+    // Helper to invoke private async methods
+    private static async Task<T> InvokePrivateMethodAsync<T>(object instance, string methodName, params object[] parameters)
+    {
+        var method = instance.GetType()
+            .GetMethod(methodName, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var task = (Task<T>)method.Invoke(instance, parameters);
+        return await task;
+    }
+
+}

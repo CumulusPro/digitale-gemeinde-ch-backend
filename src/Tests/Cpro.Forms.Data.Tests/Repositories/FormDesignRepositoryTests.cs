@@ -80,6 +80,31 @@ public class FormDesignRepositoryTests
     }
 
     [Fact]
+    public async Task GetFormDesign_InValidTenantId_ReturnsDesign()
+    {
+        // Arrange
+        var formId = Guid.NewGuid().ToString();
+        var formDesign = new FormDesign
+        {
+            Id = formId,
+            Name = "Tenant Form",
+            TenantId = -1,
+            TenantName = "Test Tenant",
+        };
+
+        _dbContext.FormDesigns.Add(formDesign);
+        await _dbContext.SaveChangesAsync();
+        _dbContext.Entry(formDesign).State = EntityState.Detached;
+
+        // Act
+        var result = await _repository.GetFormDesign(formId, -1);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("Tenant Form", result.Name);
+    }
+
+    [Fact]
     public async Task GetFormDesignByFormId_ValidFormId_ReturnsDesign()
     {
         // Arrange
@@ -240,5 +265,68 @@ public class FormDesignRepositoryTests
         Assert.NotNull(result);
         Assert.Equal("Updated Name", result.Name);
         Assert.True(result.DateUpdated <= DateTimeOffset.UtcNow);
+    }
+
+    [Fact]
+    public async Task GetTagsByNamesAsync_ExistingNames_ReturnsMatchingTags()
+    {
+        // Arrange
+        var tag1 = new Tag { TagName = "Tag1" };
+        var tag2 = new Tag { TagName = "Tag2" };
+        await _dbContext.Tags.AddRangeAsync(tag1, tag2);
+        await _dbContext.SaveChangesAsync();
+
+        var tagNames = new List<string> { "Tag1", "Tag2" };
+
+        // Act
+        var result = await _repository.GetTagsByNamesAsync(tagNames);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Count);
+        Assert.Contains(result, t => t.TagName == "Tag1");
+        Assert.Contains(result, t => t.TagName == "Tag2");
+    }
+
+    [Fact]
+    public async Task AddTagsAsync_ValidTags_AddsSuccessfully()
+    {
+        // Arrange
+        var newTags = new List<Tag>
+        {
+            new Tag { TagName = "NewTag1" },
+            new Tag { TagName = "NewTag2" }
+        };
+
+        // Act
+        await _repository.AddTagsAsync(newTags);
+
+        // Assert
+        var savedTags = await _dbContext.Tags.ToListAsync();
+        Assert.Equal(2, savedTags.Count);
+        Assert.Contains(savedTags, t => t.TagName == "NewTag1");
+        Assert.Contains(savedTags, t => t.TagName == "NewTag2");
+    }
+
+    [Fact]
+    public async Task GetAllDistinctTagNamesAsync_ReturnsSortedTagNames()
+    {
+        // Arrange
+        var tags = new List<Tag>
+        {
+            new Tag { TagName = "Zebra" },
+            new Tag { TagName = "Apple" },
+            new Tag { TagName = "Mango" }
+        };
+
+        await _dbContext.Tags.AddRangeAsync(tags);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var result = await _repository.GetAllDistinctTagNamesAsync();
+
+        // Assert
+        Assert.Equal(3, result.Count);
+        Assert.Equal(new List<string> { "Apple", "Mango", "Zebra" }, result);
     }
 }

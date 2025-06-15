@@ -9,13 +9,15 @@ public class UserServiceTests
 {
     private readonly Mock<IUserRepository> _userRepositoryMock;
     private readonly Mock<IMapper> _mapperMock;
+    private readonly Mock<ITenantRepository> _tenantRepositoryMock;
     private readonly UserService _userService;
 
     public UserServiceTests()
     {
         _userRepositoryMock = new Mock<IUserRepository>();
         _mapperMock = new Mock<IMapper>();
-        _userService = new UserService(_userRepositoryMock.Object, _mapperMock.Object);
+        _tenantRepositoryMock = new Mock<ITenantRepository>();
+        _userService = new UserService(_userRepositoryMock.Object, _mapperMock.Object, _tenantRepositoryMock.Object);
     }
 
     [Fact]
@@ -118,23 +120,23 @@ public class UserServiceTests
         var userId = Guid.NewGuid();
         var roleId = 1;
         string email = "test@test.com";
-        var user = new Data.Models.User.User { Id = userId, Role = Data.Models.User.Role.Admin };
+        var user = new List<Data.Models.User.User> { new Data.Models.User.User { Id = userId, Role = Data.Models.User.Role.Admin, TenantId = 10 } };
         var updated = new Data.Models.User.User { Id = userId, Role = Data.Models.User.Role.Designer };
 
-        _userRepositoryMock.Setup(x => x.GetUserByEmailAsync(email))
-            .ReturnsAsync(user);
         _userRepositoryMock.Setup(x => x.GetUserByIdAsync(userId))
-            .ReturnsAsync(user);
-        _userRepositoryMock.Setup(x => x.UpdateUserAsync(user))
+            .ReturnsAsync(user.First());
+        _userRepositoryMock.Setup(x => x.UpdateUserAsync(user.First()))
             .ReturnsAsync(updated);
+        _userRepositoryMock.Setup(x => x.GetUserByEmailAndTenantAsync(email, user.First().TenantId))
+            .ReturnsAsync(user.First());
 
         // Act
         await _userService.AssignUserRoleAsync(userId, Models.Enums.Role.Designer, email);
 
         // Assert
         _userRepositoryMock.Verify(x => x.GetUserByIdAsync(userId), Times.Once);
-        _userRepositoryMock.Verify(x => x.GetUserByEmailAsync(email), Times.Once);
-        _userRepositoryMock.Verify(x => x.UpdateUserAsync(user), Times.Once);
+        _userRepositoryMock.Verify(x => x.GetUserByEmailAndTenantAsync(email, user.First().TenantId), Times.Once);
+        _userRepositoryMock.Verify(x => x.UpdateUserAsync(user.First()), Times.Once);
     }
 
     [Fact]
