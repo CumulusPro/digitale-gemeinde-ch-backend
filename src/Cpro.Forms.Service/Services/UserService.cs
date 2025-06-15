@@ -53,6 +53,12 @@ public class UserService : IUserService
         await _userRepository.DeleteUserAsync(user);
     }
 
+    public async Task<UserResponse?> GetUserByEmailAndTenantAsync(string email, int tenantId)
+    {
+        var user = await _userRepository.GetUserByEmailAndTenantAsync(email, tenantId);
+        return _mapper.Map<UserResponse?>(user);
+    }
+
     public async Task<List<TenantResponse>> GetTenantsByUserEmailAsync(string email)
     {
         var users = await _userRepository.GetUsersByEmailAsync(email);

@@ -31,7 +31,7 @@ namespace Cpro.Forms.Service.Infrastructure
                 .ReverseMap();
 
             CreateMap<Data.Models.FormDesign, FormDesign>()
-                .ForMember(dest => dest.tags, opt => opt.MapFrom(src => src.Tags.Select(t => t.Tag.TagName)))
+                .ForMember(dest => dest.tags, opt => opt.MapFrom(src => src.Tags != null ? src.Tags.Select(t => t.Tag != null ?  t.Tag.TagName : "") : new List<string>()))
                 .ForMember(dest => dest.id, opt => opt.MapFrom(src => src.Id));
 
             CreateMap<FormDesign, Data.Models.FormDesign>()
