@@ -91,33 +91,33 @@ jobs:
       - task: SonarCloudAnalyze@1
         displayName: 'SonarCloud Analyse'
 
-  - job: Scan
-    displayName: 'Security Scan and SBOM Upload'
-    dependsOn: BuildAPI
-    pool:
-      vmImage: 'windows-latest'
-    steps:
-      - task: DotNetCoreCLI@2
-        displayName: 'BOM Install'
-        inputs:
-          command: 'custom'
-          custom: 'tool'
-          arguments: 'install --global CycloneDX'
+  # - job: Scan
+  #   displayName: 'Security Scan and SBOM Upload'
+  #   dependsOn: BuildAPI
+  #   pool:
+  #     vmImage: 'windows-latest'
+  #   steps:
+  #     - task: DotNetCoreCLI@2
+  #       displayName: 'BOM Install'
+  #       inputs:
+  #         command: 'custom'
+  #         custom: 'tool'
+  #         arguments: 'install --global CycloneDX'
 
-      - task: DotNetCoreCLI@2
-        displayName: 'BOM Create File'
-        inputs:
-          command: 'custom'
-          custom: 'CycloneDX'
-          arguments: '-d $(Build.Repository.LocalPath)/src/Cpro.Forms.Api/Cpro.Forms.Api.csproj -o $(Agent.TempDirectory)'
+  #     - task: DotNetCoreCLI@2
+  #       displayName: 'BOM Create File'
+  #       inputs:
+  #         command: 'custom'
+  #         custom: 'CycloneDX'
+  #         arguments: '-d $(Build.Repository.LocalPath)/src/Cpro.Forms.Api/Cpro.Forms.Api.csproj -o $(Agent.TempDirectory)'
 
-      - task: upload-bom-dtrack-task@1
-        displayName: 'BOM Upload'
-        inputs:
-          bomFilePath: '$(Agent.TempDirectory)/bom.xml'
-          dtrackProjId: '$(projId)'
-          dtrackAPIKey: '$(sbom-api-key)'
-          dtrackURI: 'https://sbom.cumuluspro.net'
+  #     - task: upload-bom-dtrack-task@1
+  #       displayName: 'BOM Upload'
+  #       inputs:
+  #         bomFilePath: '$(Agent.TempDirectory)/bom.xml'
+  #         dtrackProjId: '$(projId)'
+  #         dtrackAPIKey: '$(sbom-api-key)'
+  #         dtrackURI: 'https://sbom.cumuluspro.net'
 
-      - task: MicrosoftSecurityDevOps@1
-        displayName: 'MS Security DevOps'
+  #     - task: MicrosoftSecurityDevOps@1
+  #       displayName: 'MS Security DevOps'
