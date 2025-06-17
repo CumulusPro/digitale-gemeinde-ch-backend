@@ -122,13 +122,15 @@ public class UserRepositoryTests
             {
                 Id = Guid.NewGuid(),
                 Email = "alice@example.com",
-                FirstName = "Alice"
+                FirstName = "Alice",
+                Role = Role.Admin
             },
             new User
             {
                 Id = Guid.NewGuid(),
                 Email = "bob@example.com",
-                FirstName = "Bob"
+                FirstName = "Bob",
+                Role = Role.Admin
             }
         );
         await _dbContext.SaveChangesAsync();
@@ -136,6 +138,8 @@ public class UserRepositoryTests
         var searchRequest = new UserSearchRequest
         {
             Email = "example.com",
+            FirstName = "Alice",
+            Role = Role.Admin,
             Page = 1,
             PageSize = 10
         };
@@ -145,7 +149,7 @@ public class UserRepositoryTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(2, result.TotalCount);
+        Assert.Equal(1, result.TotalCount);
         Assert.All(result.Data, u => Assert.Contains("example.com", u.Email));
     }
 

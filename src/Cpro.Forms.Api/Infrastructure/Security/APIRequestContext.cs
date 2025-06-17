@@ -1,10 +1,4 @@
-using System;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
 using Peritos.Common.Abstractions;
-using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 
 namespace Cpro.Forms.Api.Infrastructure.Security

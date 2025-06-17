@@ -1,14 +1,15 @@
-using Cpro.Forms.Integration.SendGrid.Configuration;
 using Cpro.Forms.Integration.SendGrid.Dto;
-using HtmlAgilityPack;
-using Newtonsoft.Json.Linq;
-using SendGrid;
-using SendGrid.Helpers.Mail;
-using Microsoft.Extensions.Logging;
 
 namespace Cpro.Forms.Integration.SendGrid;
 
+/// <summary>
+/// Interface for SendGrid email service operations.
+/// </summary>
 public interface ISendGridService
 {
+    /// <summary>
+    /// Sends an email using SendGrid API with HTML content, attachments, and optional placeholders.
+    /// </summary>
+    /// <param name="emailModel">The email model containing recipient, subject, content, and attachments</param>
     Task SendEmail(EmailDto emailModel);
 }

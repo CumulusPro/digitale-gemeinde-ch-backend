@@ -17,6 +17,11 @@ public class PaymentController : Controller
         _formService = formService;
     }
 
+    /// <summary>
+    /// Creates a payment request and returns a payment link for the user to complete the transaction.
+    /// </summary>
+    /// <param name="request">The payment request containing amount, currency, and redirect URLs</param>
+    /// <returns>Payment link URL for the user to complete the transaction</returns>
     [HttpPost("Submit")]
     public async Task<IActionResult> SubmitForm([FromBody] PaymentRequest request)
     {

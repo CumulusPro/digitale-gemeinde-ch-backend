@@ -8,13 +8,20 @@ using Peritos.Common.Data.Extensions;
 
 namespace Cpro.Forms.Data.Repositories;
 
-
+/// <summary>
+/// Repository for managing form design operations including creation, updates, deletion, and retrieval with related entities.
+/// </summary>
 public class FormDesignRepository : RepositoryBase<FormDesign, SqlContext>, IFormDesignRepository
 {
     public FormDesignRepository(SqlContext context, IRequestContext requestContext = null) : base(context, requestContext)
     {
     }
 
+    /// <summary>
+    /// Creates a new form design with creation and update timestamps.
+    /// </summary>
+    /// <param name="FormDesign">The form design to create</param>
+    /// <returns>The created form design</returns>
     public async Task<FormDesign> CreateFormDesignAsync(FormDesign FormDesign)
     {
         FormDesign.DateCreated = DateTimeOffset.UtcNow;
@@ -22,6 +29,12 @@ public class FormDesignRepository : RepositoryBase<FormDesign, SqlContext>, IFor
         return await Insert(FormDesign);
     }
 
+    /// <summary>
+    /// Retrieves a form design by its ID and tenant ID, including related entities.
+    /// </summary>
+    /// <param name="formId">The unique identifier of the form design</param>
+    /// <param name="tenantId">The tenant identifier</param>
+    /// <returns>The form design with related entities if found; otherwise null</returns>
     public async Task<FormDesign?> GetFormDesign(string formId, int tenantId)
     {
         if (tenantId > 0)
@@ -43,6 +56,11 @@ public class FormDesignRepository : RepositoryBase<FormDesign, SqlContext>, IFor
         .FirstOrDefaultAsync();
     }
 
+    /// <summary>
+    /// Retrieves a form design by its ID, including related entities.
+    /// </summary>
+    /// <param name="formId">The unique identifier of the form design</param>
+    /// <returns>The form design with related entities if found; otherwise null</returns>
     public async Task<FormDesign?> GetFormDesignByFormId(string formId)
     {
         return await GetAllWithInclude(
@@ -54,6 +72,11 @@ public class FormDesignRepository : RepositoryBase<FormDesign, SqlContext>, IFor
         .FirstOrDefaultAsync();        
     }
 
+    /// <summary>
+    /// Retrieves all form designs for a specific tenant, including related entities.
+    /// </summary>
+    /// <param name="tenantId">The tenant identifier</param>
+    /// <returns>A list of form designs with related entities for the tenant</returns>
     public async Task<List<FormDesign>> GetFormDesignsByTenantId(int tenantId)
     {
         return await GetAllWithInclude(
@@ -65,12 +88,22 @@ public class FormDesignRepository : RepositoryBase<FormDesign, SqlContext>, IFor
         .ToListAsync();
     }
 
+    /// <summary>
+    /// Gets the total count of form designs in the system.
+    /// </summary>
+    /// <returns>The total count of form designs</returns>
     public async Task<int> GetFormDesignCountAsync()
     {
         var query = _context.FormDesigns.AsQueryable();
         return await query.CountAsync();
     }
 
+    /// <summary>
+    /// Deletes a form design by its ID and tenant ID.
+    /// </summary>
+    /// <param name="formId">The unique identifier of the form design</param>
+    /// <param name="tenantId">The tenant identifier</param>
+    /// <returns>The deleted form design if found; otherwise null</returns>
     public async Task<FormDesign> DeleteFormDesignAsync(string formId, int tenantId)
     {
         var FormDesign = await GetFormDesign(formId, tenantId);
@@ -82,6 +115,12 @@ public class FormDesignRepository : RepositoryBase<FormDesign, SqlContext>, IFor
         return null;
     }
 
+    /// <summary>
+    /// Searches for form designs based on specified criteria with pagination support.
+    /// </summary>
+    /// <param name="searchParameters">The search criteria including keywords and ordering</param>
+    /// <param name="tenantId">The tenant identifier</param>
+    /// <returns>A paged response containing matching form designs</returns>
     public async Task<PagingResponse<FormDesign>> SearchFormDesignsAsync(SearchRequest searchParameters, int tenantId)
     {
         var query = _context.FormDesigns
@@ -117,12 +156,23 @@ public class FormDesignRepository : RepositoryBase<FormDesign, SqlContext>, IFor
         };
     }
 
+    /// <summary>
+    /// Updates an existing form design with an updated timestamp.
+    /// </summary>
+    /// <param name="formId">The unique identifier of the form design to update</param>
+    /// <param name="formDesign">The updated form design</param>
+    /// <returns>The updated form design</returns>
     public async Task<FormDesign> UpdateFormDesignAsync(string formId, FormDesign formDesign)
     {
         formDesign.DateUpdated = DateTimeOffset.UtcNow;
         return await Update(formDesign);
     }
 
+    /// <summary>
+    /// Retrieves tags by their names.
+    /// </summary>
+    /// <param name="names">A list of tag names to retrieve</param>
+    /// <returns>A list of tags matching the provided names</returns>
     public async Task<List<Tag>> GetTagsByNamesAsync(List<string> names)
     {
         return await _context.Tags
@@ -130,6 +180,10 @@ public class FormDesignRepository : RepositoryBase<FormDesign, SqlContext>, IFor
         .ToListAsync();
     }
 
+    /// <summary>
+    /// Adds multiple tags to the database.
+    /// </summary>
+    /// <param name="tags">A list of tags to add</param>
     public async Task AddTagsAsync(List<Tag> tags)
     {
         if (tags != null && tags.Any())
@@ -139,6 +193,10 @@ public class FormDesignRepository : RepositoryBase<FormDesign, SqlContext>, IFor
         }
     }
 
+    /// <summary>
+    /// Retrieves all distinct tag names ordered alphabetically.
+    /// </summary>
+    /// <returns>A list of unique tag names</returns>
     public async Task<List<string>> GetAllDistinctTagNamesAsync()
     {
         return await _context.Tags

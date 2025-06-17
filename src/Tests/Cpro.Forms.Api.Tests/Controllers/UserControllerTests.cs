@@ -24,6 +24,35 @@ public class UserControllerTests
     }
 
     [Fact]
+    public async Task GetUser_ReturnsOkResult_WhenUserExists()
+    {
+        // Arrange
+        var tenantId = 1;
+        var email = "user@example.com";
+        var expectedUser = new UserResponse { Email = email };
+
+        var claims = new List<Claim>
+        {
+            new Claim("emails", email)
+        };
+        var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(claims));
+        var httpContext = new DefaultHttpContext { User = claimsPrincipal };
+
+        _httpContextAccessorMock.Setup(x => x.HttpContext).Returns(httpContext);
+        _userServiceMock.Setup(x => x.GetUserByEmailAndTenantAsync(email, tenantId))
+            .ReturnsAsync(expectedUser);
+
+        // Act
+        var result = await _controller.GetUser(tenantId);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var returnValue = Assert.IsType<UserResponse>(okResult.Value);
+        Assert.Equal(expectedUser.Email, returnValue.Email);
+        _userServiceMock.Verify(x => x.GetUserByEmailAndTenantAsync(email, tenantId), Times.Once);
+    }
+
+    [Fact]
     public async Task GetUserById_ReturnsOkResult_WhenUserExists()
     {
         // Arrange
@@ -151,4 +180,38 @@ public class UserControllerTests
         var returnValue = Assert.IsType<PagingResponse<UserResponse>>(okResult.Value);
         Assert.Equal(expectedResponse, returnValue);
     }
-} 
+
+    [Fact]
+    public async Task GetTenantsByEmail_ReturnsOkResult_WhenTenantsFound()
+    {
+        // Arrange
+        var email = "user@example.com";
+        var expectedTenants = new List<Service.Models.TenantResponse>
+        {
+            new Service.Models.TenantResponse { Id = 1, Name = "Tenant A" },
+            new Service.Models.TenantResponse { Id = 2, Name = "Tenant B" }
+        };
+
+        var claims = new List<Claim>
+        {
+            new Claim("emails", email)
+        };
+        var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(claims));
+        var httpContext = new DefaultHttpContext { User = claimsPrincipal };
+
+        _httpContextAccessorMock.Setup(x => x.HttpContext).Returns(httpContext);
+        _userServiceMock.Setup(x => x.GetTenantsByUserEmailAsync(email))
+            .ReturnsAsync(expectedTenants);
+
+        // Act
+        var result = await _controller.GetTenantsByEmail();
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var returnValue = Assert.IsAssignableFrom<List<Service.Models.TenantResponse>>(okResult.Value);
+        Assert.Equal(expectedTenants.Count, returnValue.Count);
+        Assert.Equal(expectedTenants[0].Id, returnValue[0].Id);
+        _userServiceMock.Verify(x => x.GetTenantsByUserEmailAsync(email), Times.Once);
+    }
+
+}

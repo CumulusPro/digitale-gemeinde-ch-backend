@@ -17,6 +17,13 @@ public class FormController : Controller
         _formService = formService;
     }
 
+    /// <summary>
+    /// Retrieves form data based on the provided parameters.
+    /// </summary>
+    /// <param name="formId">The unique identifier of the form</param>
+    /// <param name="tenantId">The tenant identifier</param>
+    /// <param name="documentId">Optional document identifier for existing form data</param>
+    /// <returns>Form data response</returns>
     [HttpGet("{formId}")]
     [HttpGet("{formId}/document/{documentId}")]
     [AllowAnonymous]
@@ -26,6 +33,12 @@ public class FormController : Controller
         return Ok(response);
     }
 
+    /// <summary>
+    /// Submits form data
+    /// </summary>
+    /// <param name="jsonData">The form data to submit</param>
+    /// <param name="origin">The origin URL for payment processing</param>
+    /// <returns>Form submission response with document ID</returns>
     [HttpPost("Submit")]
     [AllowAnonymous]
     public async Task<ActionResult<FormResponse>> SubmitForm([FromBody] dynamic jsonData, [FromHeader(Name = "Origin")] string origin)
@@ -35,6 +48,14 @@ public class FormController : Controller
         return Ok(response);
     }
 
+    /// <summary>
+    /// Updates the status of an existing form.
+    /// </summary>
+    /// <param name="request">The status update request</param>
+    /// <param name="formId">The form identifier</param>
+    /// <param name="documentId">The document identifier</param>
+    /// <param name="tenantId">The tenant identifier</param>
+    /// <returns>Updated form definition response</returns>
     [HttpPut("{formId}/document/{documentId}")]
     public async Task<ActionResult<CreateFormDefinitionResponse>> UpdateFormData([FromBody] StatusRequest request,
         string formId, string documentId, [FromQuery] int? tenantId)
@@ -43,6 +64,11 @@ public class FormController : Controller
         return Ok(response);
     }
     
+    /// <summary>
+    /// Retrieves form navigation data
+    /// </summary>
+    /// <param name="tenantId">The tenant identifier</param>
+    /// <returns>List of form navigation items with status-based counts</returns>
     [HttpGet("count")]
     public async Task<ActionResult<List<FormNavigation>>> GetFormNavigation([FromQuery] int? tenantId)
     {
@@ -50,6 +76,12 @@ public class FormController : Controller
         return Ok(response);
     }
 
+    /// <summary>
+    /// Searches form data based on specified criteria with pagination support.
+    /// </summary>
+    /// <param name="searchRequest">The search criteria</param>
+    /// <param name="tenantId">The tenant identifier</param>
+    /// <returns>Paged response containing matching form data</returns>
     [HttpPost("search")]
     public async Task<ActionResult<PagingResponse<FormData>>> SearchFormData([FromBody] FormSearchRequest searchRequest, [FromQuery] int tenantId)
     {

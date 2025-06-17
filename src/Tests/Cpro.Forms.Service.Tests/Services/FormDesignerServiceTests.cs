@@ -331,10 +331,22 @@ public class FormDesignerServiceTests
             Name = "Original Form",
             TenantId = 1,
             Version = 1,
-            Designers = new List<Data.Models.Designer>(),
-            Processors = new List<Data.Models.Processor>(),
-            FormStates = new List<Data.Models.FormStatesConfig>(),
-            Tags = new List<Data.Models.FormDesignTag>()
+            Designers = new List<Data.Models.Designer>
+            {
+                new Data.Models.Designer { DesignerId = 10, FormDesignId = formId }
+            },
+            Processors = new List<Data.Models.Processor>
+            {
+                new Data.Models.Processor { ProcessorId = 20, FormDesignId = formId }
+            },
+            FormStates = new List<Data.Models.FormStatesConfig>
+            {
+                new Data.Models.FormStatesConfig { Label = "Approved", Value = "approved", FormDesignId = formId }
+            },
+            Tags = new List<Data.Models.FormDesignTag>
+            {
+                new Data.Models.FormDesignTag { TagId = 1, FormDesignId = formId }
+            }
         };
 
         var duplicatedForm = new Data.Models.FormDesign
@@ -345,10 +357,22 @@ public class FormDesignerServiceTests
             Name = "Original Form_20250101120000",
             TenantId = 1,
             Version = 1,
-            Designers = new List<Data.Models.Designer>(),
-            Processors = new List<Data.Models.Processor>(),
-            FormStates = new List<Data.Models.FormStatesConfig>(),
-            Tags = new List<Data.Models.FormDesignTag>()
+            Designers = new List<Data.Models.Designer>
+            {
+                new Data.Models.Designer { DesignerId = 10, FormDesignId = formId }
+            },
+            Processors = new List<Data.Models.Processor>
+            {
+                new Data.Models.Processor { ProcessorId = 20, FormDesignId = formId }
+            },
+            FormStates = new List<Data.Models.FormStatesConfig>
+            {
+                new Data.Models.FormStatesConfig { Label = "Approved", Value = "approved", FormDesignId = formId }
+            },
+            Tags = new List<Data.Models.FormDesignTag>
+            {
+                new Data.Models.FormDesignTag { TagId = 1, FormDesignId = formId }
+            }
         };
 
         var fieldRequest = new FieldRequest

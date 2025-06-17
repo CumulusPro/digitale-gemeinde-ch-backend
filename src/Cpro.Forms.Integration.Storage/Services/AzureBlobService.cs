@@ -6,6 +6,9 @@ using System.Text;
 
 namespace Cpro.Forms.Integration.Storage.Services;
 
+/// <summary>
+/// Service for managing Azure Blob Storage operations including file upload, download, deletion, and URL generation.
+/// </summary>
 public class AzureBlobService : IAzureBlobService
 {
     private readonly IStorageConfiguration _configuration;
@@ -15,6 +18,11 @@ public class AzureBlobService : IAzureBlobService
         _configuration = configuration;
     }
 
+    /// <summary>
+    /// Gets a blob client for the specified file name.
+    /// </summary>
+    /// <param name="fileName">The name of the file in blob storage</param>
+    /// <returns>A blob client for the specified file</returns>
     public BlobClient GetBlobClient(string fileName)
     {
         var azureStorageConnectionString = _configuration.AzureStorageConnectionString;
@@ -26,6 +34,11 @@ public class AzureBlobService : IAzureBlobService
         return blobClient;
     }
 
+    /// <summary>
+    /// Retrieves the content of a file from Azure Blob Storage.
+    /// </summary>
+    /// <param name="fileName">The name of the file to retrieve</param>
+    /// <returns>The file content as a string, or null if the file doesn't exist</returns>
     public async Task<string> GetFile(string fileName)
     {
         BlobClient blobClient = GetBlobClient(fileName);
@@ -41,6 +54,11 @@ public class AzureBlobService : IAzureBlobService
         }
     }
 
+    /// <summary>
+    /// Generates a signed URL for accessing a blob with read permissions for 24 hours.
+    /// </summary>
+    /// <param name="fileName">The name of the file to generate a signed URL for</param>
+    /// <returns>A signed URL for accessing the blob, or empty string if generation fails</returns>
     public string GetSignedUrl(string fileName)
     {
         try
@@ -68,6 +86,10 @@ public class AzureBlobService : IAzureBlobService
         }
     }
 
+    /// <summary>
+    /// Deletes a file from Azure Blob Storage if it exists.
+    /// </summary>
+    /// <param name="fileName">The name of the file to delete</param>
     public async Task DeleteFile(string fileName)
     {
         if (!string.IsNullOrWhiteSpace(fileName))
@@ -77,6 +99,10 @@ public class AzureBlobService : IAzureBlobService
         }
     }
 
+    /// <summary>
+    /// Deletes all blobs with the specified folder prefix from Azure Blob Storage.
+    /// </summary>
+    /// <param name="folderPrefix">The folder prefix to match for deletion</param>
     public async Task DeleteFolder(string folderPrefix)
     {
         var containerClient = GetBlobContainerClient();
@@ -91,6 +117,11 @@ public class AzureBlobService : IAzureBlobService
         await Task.WhenAll(deleteTasks);
     }
 
+    /// <summary>
+    /// Uploads byte array data to a specified URL (typically a signed URL from another service).
+    /// </summary>
+    /// <param name="uploadFileUrl">The URL to upload the file to</param>
+    /// <param name="data">The byte array data to upload</param>
     public async Task UploadFile(string uploadFileUrl, byte[] data)
     {
         using (var memoryStream = new MemoryStream(data))
@@ -102,12 +133,21 @@ public class AzureBlobService : IAzureBlobService
         }
     }
 
+    /// <summary>
+    /// Uploads a memory stream to Azure Blob Storage with the specified file name.
+    /// </summary>
+    /// <param name="fileName">The name of the file in blob storage</param>
+    /// <param name="memoryStream">The memory stream containing the file data</param>
     public async Task UploadFile(string fileName, MemoryStream memoryStream)
     {
         BlobClient blobClient = GetBlobClient(fileName);
         await blobClient.UploadAsync(memoryStream, overwrite: true);
     }
 
+    /// <summary>
+    /// Gets a blob container client for the configured storage account and container.
+    /// </summary>
+    /// <returns>A blob container client</returns>
     private BlobContainerClient GetBlobContainerClient()
     {
         var azureStorageConnectionString = _configuration.AzureStorageConnectionString;

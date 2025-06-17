@@ -112,7 +112,7 @@ public class TenantControllerTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _controller.SearchFormData(searchRequest);
+        var result = await _controller.SearchTenants(searchRequest);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);

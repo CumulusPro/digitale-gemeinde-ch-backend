@@ -1,9 +1,5 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Peritos.Common.Abstractions;
 using Cpro.Forms.Api.Infrastructure.Security;
-using System;
-using System.Threading.Tasks;
+using Peritos.Common.Abstractions;
 
 namespace Cpro.Forms.Api.Infrastructure.Middleware
 {

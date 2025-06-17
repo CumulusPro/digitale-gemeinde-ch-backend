@@ -1,13 +1,12 @@
 ﻿using Cpro.Forms.Integration.SendGrid.Configuration;
 using Cpro.Forms.Integration.SendGrid.Dto;
-using HtmlAgilityPack;
-using Newtonsoft.Json.Linq;
+using Microsoft.Extensions.Logging;
 using SendGrid;
 using SendGrid.Helpers.Mail;
-using Microsoft.Extensions.Logging;
 
 namespace Cpro.Forms.Integration.SendGrid;
 
+/// <inheritdoc />
 public class SendGridService : ISendGridService
 {
     private readonly ISendGridConfig _configuration;
@@ -19,7 +18,8 @@ public class SendGridService : ISendGridService
         _logger = logger;
     }
 
-   public async Task SendEmail(EmailDto emailModel)
+    /// <inheritdoc />
+    public async Task SendEmail(EmailDto emailModel)
     {
         var apiKey = _configuration.APIKey;
         var client = new SendGridClient(apiKey);

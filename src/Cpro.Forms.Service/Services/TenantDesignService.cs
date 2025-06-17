@@ -5,6 +5,9 @@ using System.Text;
 
 namespace Cpro.Forms.Service.Services;
 
+/// <summary>
+/// Service for managing tenant-specific design configurations including header, footer, and design settings.
+/// </summary>
 public class TenantDesignService : ITenantDesignService
 {
     private readonly IAzureBlobService _azureBlobService;
@@ -14,6 +17,12 @@ public class TenantDesignService : ITenantDesignService
         _azureBlobService = azureBlobService;
     }
 
+    /// <summary>
+    /// Creates or updates a tenant design configuration and stores it in blob storage.
+    /// </summary>
+    /// <param name="design">The tenant design configuration to save</param>
+    /// <param name="tenantId">The tenant identifier</param>
+    /// <returns>The saved tenant design configuration</returns>
     public async Task<TenantDesign> CreateUpdateTenantDesign(TenantDesign design, int tenantId)
     {
         var jsonObjectString = JsonConvert.SerializeObject(design);
@@ -27,6 +36,11 @@ public class TenantDesignService : ITenantDesignService
         return design;
     }
 
+    /// <summary>
+    /// Retrieves a tenant design configuration by tenant ID.
+    /// </summary>
+    /// <param name="tenantId">The tenant identifier</param>
+    /// <returns>The tenant design configuration if found; otherwise a new empty configuration</returns>
     public async Task<TenantDesign> GetTenantDesign(int tenantId)
     {
         var blobClient = _azureBlobService.GetBlobClient($"{tenantId}.json");

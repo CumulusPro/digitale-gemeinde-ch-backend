@@ -6,6 +6,9 @@ using Newtonsoft.Json;
 
 namespace Cpro.Forms.Service.Services;
 
+/// <summary>
+/// Service for managing form design version history including retrieval and storage of historical versions.
+/// </summary>
 public class FormDesignerHistoryService : IFormDesignerHistoryService
 {
     private readonly IAzureBlobService _azureBlobService;
@@ -22,6 +25,11 @@ public class FormDesignerHistoryService : IFormDesignerHistoryService
         _formDesignHistoryRepository = formDesignHistoryRepository;
     }
 
+    /// <summary>
+    /// Retrieves all versions of a form design with signed URLs for blob storage access.
+    /// </summary>
+    /// <param name="formId">The unique identifier of the form</param>
+    /// <returns>A list of form design versions</returns>
     public async Task<List<FormDesign>> GetAllVersions(string formId)
     {
         var versions = await _formDesignHistoryRepository.GetAllVersions(formId);
@@ -34,6 +42,14 @@ public class FormDesignerHistoryService : IFormDesignerHistoryService
         return _mapper.Map<List<FormDesign>>(versions);
     }
 
+    /// <summary>
+    /// Retrieves a specific version of a form design by form ID and version number.
+    /// </summary>
+    /// <param name="formId">The unique identifier of the form</param>
+    /// <param name="version">The version number to retrieve</param>
+    /// <returns>The field request for the specified version</returns>
+    /// <exception cref="FileNotFoundException">Thrown when the specified version is not found</exception>
+    /// <exception cref="InvalidOperationException">Thrown when JSON deserialization fails</exception>
     public async Task<FieldRequest> GetVersion(string formId, int version)
     {
         var history = await _formDesignHistoryRepository.GetVersion(formId, version)
@@ -44,6 +60,10 @@ public class FormDesignerHistoryService : IFormDesignerHistoryService
         return fieldRequest ?? throw new InvalidOperationException($"Failed to deserialize JSON for FormId: {formId} and Version: {version}");
     }
 
+    /// <summary>
+    /// Saves a form design version to the history repository for future reference.
+    /// </summary>
+    /// <param name="formDesign">The form design to save to history</param>
     public async Task SaveFormDesignVersionHistory(Data.Models.FormDesign? formDesign)
     {
         var history = new Data.Models.FormDesignHistory

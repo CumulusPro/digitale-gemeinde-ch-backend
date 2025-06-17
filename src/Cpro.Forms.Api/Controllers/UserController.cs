@@ -20,6 +20,11 @@ public class UserController : Controller
         _httpContextAccessor = httpContextAccessor;
     }
 
+    /// <summary>
+    /// Retrieves the current user based on claims and tenant ID.
+    /// </summary>
+    /// <param name="tenantId">The tenant identifier</param>
+    /// <returns>User information if found; otherwise NotFound</returns>
     [HttpGet]
     public async Task<IActionResult> GetUser(int tenantId)
     {
@@ -31,6 +36,11 @@ public class UserController : Controller
         return user == null ? NotFound() : Ok(user);
     }
 
+    /// <summary>
+    /// Retrieves a user by their unique identifier.
+    /// </summary>
+    /// <param name="id">The unique identifier of the user</param>
+    /// <returns>User information if found; otherwise NotFound</returns>
     [HttpGet("{id}")]
     public async Task<IActionResult> GetUserById(Guid id)
     {
@@ -38,6 +48,11 @@ public class UserController : Controller
         return user == null ? NotFound() : Ok(user);
     }
 
+    /// <summary>
+    /// Creates a new user in the system.
+    /// </summary>
+    /// <param name="userRequest">The user creation request</param>
+    /// <returns>The created user information</returns>
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] UserRequest userRequest)
     {
@@ -45,6 +60,12 @@ public class UserController : Controller
         return Ok(result);
     }
 
+    /// <summary>
+    /// Updates an existing user's information.
+    /// </summary>
+    /// <param name="id">The unique identifier of the user to update</param>
+    /// <param name="userRequest">The user update request</param>
+    /// <returns>The updated user information</returns>
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserRequest userRequest)
     {
@@ -52,6 +73,11 @@ public class UserController : Controller
         return Ok(result);
     }
 
+    /// <summary>
+    /// Deletes a user from the system.
+    /// </summary>
+    /// <param name="id">The unique identifier of the user to delete</param>
+    /// <returns>NoContent response</returns>
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)
     {
@@ -59,6 +85,12 @@ public class UserController : Controller
         return NoContent();
     }
 
+    /// <summary>
+    /// Assigns a new role to a user. Only administrators can perform this operation.
+    /// </summary>
+    /// <param name="id">The unique identifier of the user</param>
+    /// <param name="newRole">The new role to assign</param>
+    /// <returns>The updated user information</returns>
     [HttpPost("{id}/assign-role")]
     public async Task<IActionResult> AssignRole(Guid id, [FromBody] Role newRole)
     {
@@ -70,6 +102,11 @@ public class UserController : Controller
         return Ok(updated);
     }
 
+    /// <summary>
+    /// Searches for users based on specified criteria with pagination support.
+    /// </summary>
+    /// <param name="searchRequest">The search criteria</param>
+    /// <returns>Paged response containing matching users</returns>
     [HttpPost("search")]
     public async Task<ActionResult<PagingResponse<UserResponse>>> SearchFormData([FromBody] UserSearchRequest searchRequest)
     {
@@ -77,6 +114,10 @@ public class UserController : Controller
         return Ok(users);
     }
 
+    /// <summary>
+    /// Retrieves all tenants associated with the current user's email address.
+    /// </summary>
+    /// <returns>List of tenant information</returns>
     [HttpGet("tenants")]
     public async Task<IActionResult> GetTenantsByEmail()
     {

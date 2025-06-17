@@ -12,6 +12,9 @@ using Peritos.Common.Abstractions.Paging;
 
 namespace Cpro.Forms.Service.Services;
 
+/// <summary>
+/// Service for managing form operations including data retrieval, submission, and navigation.
+/// </summary>
 public class FormService : IFormService
 {
     private readonly IStraatosApiService _straatosApiService;
@@ -46,6 +49,14 @@ public class FormService : IFormService
         _serviceConfig = serviceConfig;
     }
 
+    /// <summary>
+    /// Retrieves form data based on form ID and optional document ID.
+    /// If document ID is provided, returns existing form data; otherwise returns form definition for new submissions.
+    /// </summary>
+    /// <param name="formId">The unique identifier of the form</param>
+    /// <param name="tenantId">The tenant identifier</param>
+    /// <param name="documentId">Optional document identifier for existing form data</param>
+    /// <returns>A document response containing form data or definition</returns>
     public async Task<DocumentResponse> GetFormDataAsync(string formId, int? tenantId, string documentId)
     {
         var tenant = Convert.ToInt32(tenantId);
@@ -84,6 +95,11 @@ public class FormService : IFormService
         return documenTypeResponse;
     }
 
+    /// <summary>
+    /// Retrieves form navigation data including form counts by status for a specific tenant.
+    /// </summary>
+    /// <param name="tenantId">The tenant identifier</param>
+    /// <returns>A list of form navigation items with status-based counts</returns>
     public async Task<List<FormNavigation>> GetFormNavigationAsync(int? tenantId)
     {
         var tenant = Convert.ToInt32(tenantId);
@@ -142,6 +158,12 @@ public class FormService : IFormService
         return response;
     }
 
+    /// <summary>
+    /// Searches form data based on specified criteria with pagination support.
+    /// </summary>
+    /// <param name="searchRequest">The search criteria including keywords, form ID, and status</param>
+    /// <param name="tenantId">The tenant identifier</param>
+    /// <returns>A paged response containing matching form data</returns>
     public async Task<PagingResponse<FormData>> SearchFormData(FormSearchRequest searchRequest, int tenantId)
     {
         var datamodel = _mapper.Map<Data.Models.FormSearchRequest>(searchRequest);
@@ -149,6 +171,12 @@ public class FormService : IFormService
         return _mapper.Map<PagingResponse<FormData>>(updated);
     }
 
+    /// <summary>
+    /// Submits form data, handling payment processing, email notifications, and data persistence.
+    /// </summary>
+    /// <param name="jsonData">The form data to submit</param>
+    /// <param name="origin">The origin URL for payment processing</param>
+    /// <returns>A form response containing the document ID</returns>
     public async Task<FormResponse> SubmitTaskAsync(dynamic jsonData, string origin)
     {
         jsonData.data.FormId = jsonData.formId;
@@ -248,6 +276,14 @@ public class FormService : IFormService
         await _formDataRepository.CreateFormDataAsync(formData);
     }
 
+    /// <summary>
+    /// Updates the status of an existing form document.
+    /// </summary>
+    /// <param name="tenantId">The tenant identifier</param>
+    /// <param name="formId">The form identifier</param>
+    /// <param name="documentId">The document identifier</param>
+    /// <param name="status">The new status to set</param>
+    /// <returns>The updated document response</returns>
     public async Task<DocumentResponse> UpdateFormStatus(int? tenantId, string formId,string documentId, string status)
     {
         var formData = await _formDataRepository.GetFormDataByDocumentId(documentId);

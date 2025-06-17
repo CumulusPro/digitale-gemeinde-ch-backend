@@ -8,6 +8,9 @@ using System.Text;
 
 namespace Cpro.Forms.Service.Services;
 
+/// <summary>
+/// Service for managing form design operations including creation, updates, duplication, and retrieval of form definitions.
+/// </summary>
 public class FormDesignerService : IFormDesignerService
 {
     private readonly IAzureBlobService _azureBlobService;
@@ -27,6 +30,14 @@ public class FormDesignerService : IFormDesignerService
         _formDesignHistoryService = formDesignHistoryService;
     }
 
+    /// <summary>
+    /// Creates or updates a form definition with the specified fields and configuration.
+    /// </summary>
+    /// <param name="fieldRequest">The field request containing form configuration</param>
+    /// <param name="formId">The unique identifier of the form</param>
+    /// <param name="tenantId">The tenant identifier</param>
+    /// <param name="email">The email of the user creating/updating the form</param>
+    /// <returns>The created or updated form design</returns>
     public async Task<FormDesign> CreateFormDefinitionAsync(FieldRequest fieldRequest, string formId, int? tenantId, string email)
     {
         var tenant = Convert.ToInt32(tenantId);
@@ -76,6 +87,12 @@ public class FormDesignerService : IFormDesignerService
         return response;
     }
 
+    /// <summary>
+    /// Retrieves the JSON data for a specific form by its ID.
+    /// </summary>
+    /// <param name="formId">The unique identifier of the form</param>
+    /// <returns>A signed URL to access the form's JSON data</returns>
+    /// <exception cref="FileNotFoundException">Thrown when the form definition is not found</exception>
     public async Task<string> GetFormDataJsonAsync(string formId)
     {
         var formDesign = await _formDesignRepository.GetFormDesignByFormId(formId)
@@ -84,6 +101,13 @@ public class FormDesignerService : IFormDesignerService
         return _azureBlobService.GetSignedUrl(formDesign.StorageUrl);
     }
 
+    /// <summary>
+    /// Retrieves the complete form definition response including tenant-specific design configurations.
+    /// </summary>
+    /// <param name="formId">The unique identifier of the form</param>
+    /// <param name="tenantId">The tenant identifier</param>
+    /// <returns>A document response containing the complete form definition</returns>
+    /// <exception cref="FileNotFoundException">Thrown when the form definition is not found</exception>
     public async Task<DocumentResponse> GetFormDefinitionResponseAsync(string formId, int? tenantId)
     {
         var form = await _formDesignRepository.GetFormDesign(formId, Convert.ToInt32(tenantId))
@@ -116,6 +140,11 @@ public class FormDesignerService : IFormDesignerService
         return documentResponse;
     }
 
+    /// <summary>
+    /// Retrieves all form designs for a specific tenant.
+    /// </summary>
+    /// <param name="tenantId">The tenant identifier</param>
+    /// <returns>A list of form designs with signed URLs</returns>
     public async Task<List<FormDesign>> GetFormDesignsByTenantIdAsync(int tenantId)
     {
         var formDesigns = await _formDesignRepository.GetFormDesignsByTenantId(tenantId);
@@ -128,12 +157,24 @@ public class FormDesignerService : IFormDesignerService
         return _mapper.Map<List<FormDesign>>(formDesigns);
     }
 
+    /// <summary>
+    /// Deletes a form design and its associated storage folder.
+    /// </summary>
+    /// <param name="formId">The unique identifier of the form to delete</param>
+    /// <param name="tenantId">The tenant identifier</param>
     public async Task DeleteFormDesignAsync(string formId, int tenantId)
     {
         await _azureBlobService.DeleteFolder(formId);
         await _formDesignRepository.DeleteFormDesignAsync(formId, tenantId);
     }
 
+    /// <summary>
+    /// Creates a duplicate of an existing form definition with a new ID and timestamped name.
+    /// </summary>
+    /// <param name="formId">The unique identifier of the form to duplicate</param>
+    /// <param name="email">The email of the user creating the duplicate</param>
+    /// <returns>The duplicated form design</returns>
+    /// <exception cref="FileNotFoundException">Thrown when the original form definition is not found</exception>
     public async Task<FormDesign> DuplicateFormDefinitionAsync(string formId, string email)
     {
         var originalForm = await _formDesignRepository.GetFormDesignByFormId(formId)
@@ -200,6 +241,12 @@ public class FormDesignerService : IFormDesignerService
         return _mapper.Map<FormDesign>(savedForm);
     }
 
+    /// <summary>
+    /// Searches for form designs based on specified criteria with pagination support.
+    /// </summary>
+    /// <param name="searchRequest">The search criteria</param>
+    /// <param name="tenantId">The tenant identifier</param>
+    /// <returns>A paged response containing matching form designs</returns>
     public async Task<PagingResponse<FormDesign>> SearchFormDesignsAsync(SearchRequest searchRequest, int tenantId)
     {
         var datamodel = _mapper.Map<Data.Models.SearchRequest>(searchRequest);
@@ -207,6 +254,12 @@ public class FormDesignerService : IFormDesignerService
         return _mapper.Map<PagingResponse<FormDesign>>(formDesigns);
     }
 
+    /// <summary>
+    /// Activates or deactivates a form definition.
+    /// </summary>
+    /// <param name="formId">The unique identifier of the form</param>
+    /// <param name="isActive">Whether the form should be active</param>
+    /// <param name="tenantId">The tenant identifier</param>
     public async Task ActivateFormDefinitionAsync(string formId, bool isActive, int? tenantId)
     {
         var formDesign = await _formDesignRepository.GetFormDesign(formId, tenantId ?? 0)
@@ -216,6 +269,10 @@ public class FormDesignerService : IFormDesignerService
         await _formDesignRepository.UpdateFormDesignAsync(formId, formDesign);
     }
 
+    /// <summary>
+    /// Retrieves all distinct tag names used across form designs.
+    /// </summary>
+    /// <returns>A list of unique tag names</returns>
     public async Task<List<string>> GetAllDistinctTagNamesAsync()
     {
         return await _formDesignRepository.GetAllDistinctTagNamesAsync();

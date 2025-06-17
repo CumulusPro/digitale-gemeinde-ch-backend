@@ -8,7 +8,9 @@ using System.Text;
 
 namespace Cpro.Forms.Service.Services;
 
-
+/// <summary>
+/// Service for handling payment operations including payment request creation and signature generation.
+/// </summary>
 public class PaymentService : IPaymentService
 {
     private string _instance = "billing";
@@ -21,6 +23,12 @@ public class PaymentService : IPaymentService
         _logger = logger;
     }
 
+    /// <summary>
+    /// Creates a payment request and returns a payment link for the user to complete the transaction.
+    /// </summary>
+    /// <param name="paymentRequest">The payment request containing amount, currency, and redirect URLs</param>
+    /// <returns>A payment link URL for the user to complete the transaction</returns>
+    /// <exception cref="Exception">Thrown when the payment API returns an error response</exception>
     public async Task<string> CreatePaymentRequest(PaymentRequest paymentRequest)
     {
         if (paymentRequest == null)
@@ -81,6 +89,12 @@ public class PaymentService : IPaymentService
 
     }
 
+    /// <summary>
+    /// Builds a cryptographic signature for payment API authentication using HMAC-SHA256.
+    /// </summary>
+    /// <param name="query">The query string to sign</param>
+    /// <param name="client_secret">The client secret key for signature generation</param>
+    /// <returns>A base64-encoded signature string</returns>
     public static string BuildSignature(string query, string client_secret)
     {
         Encoding ascii = Encoding.ASCII;

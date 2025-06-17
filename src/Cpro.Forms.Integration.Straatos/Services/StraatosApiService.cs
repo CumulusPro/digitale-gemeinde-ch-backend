@@ -8,6 +8,9 @@ using System.Text;
 
 namespace Cpro.Forms.Integration.Straatos.Services;
 
+/// <summary>
+/// Service for integrating with the Straatos API, handling document uploads, user management, and tenant operations.
+/// </summary>
 public class StraatosApiService : IStraatosApiService
 {
     private readonly IStraatosConfiguration _configuration;
@@ -21,6 +24,12 @@ public class StraatosApiService : IStraatosApiService
         _azureBlobService = azureBlobService;
     }
 
+    /// <summary>
+    /// Uploads form data to Straatos workflow system with file handling and document creation.
+    /// </summary>
+    /// <param name="jsonData">The form data to upload</param>
+    /// <param name="documentResponse">The document response containing form configuration</param>
+    /// <returns>The document ID returned from Straatos</returns>
     public async Task<string> UploadSimple(dynamic jsonData, DocumentResponse documentResponse)
     {
         string baseUrl = _configuration.BaseUrl;
@@ -85,6 +94,14 @@ public class StraatosApiService : IStraatosApiService
         return documentId;
     }
 
+    /// <summary>
+    /// Extracts and processes index field objects from form data, separating file uploads from regular fields.
+    /// </summary>
+    /// <param name="jsonData">The form data containing field values</param>
+    /// <param name="documentResponse">The document response containing field definitions</param>
+    /// <param name="combinedObject">Output parameter containing combined object without files</param>
+    /// <param name="combinedObjectWithFiles">Output parameter containing combined object with files</param>
+    /// <returns>A dictionary containing the processed index fields</returns>
     public IDictionary<string, object> GetIndexFieldObject(dynamic jsonData, DocumentResponse documentResponse, out dynamic combinedObject, out dynamic combinedObjectWithFiles)
     {
         var tabs = documentResponse.Fields.Select(x => x.TabName).Distinct();
@@ -121,6 +138,11 @@ public class StraatosApiService : IStraatosApiService
         return combinedDict;
     }
 
+    /// <summary>
+    /// Converts base64 file data to byte array for file upload processing.
+    /// </summary>
+    /// <param name="filedata">The base64 encoded file data</param>
+    /// <returns>Byte array representation of the file data</returns>
     private byte[] ConvertToByteArray(string filedata)
     {
         if (!string.IsNullOrWhiteSpace(filedata)) 
@@ -132,6 +154,11 @@ public class StraatosApiService : IStraatosApiService
         return null;
     }
 
+    /// <summary>
+    /// Retrieves the current user information from Straatos using the provided authentication token.
+    /// </summary>
+    /// <param name="token">The authentication token for the current user</param>
+    /// <returns>JSON string containing current user information</returns>
     public async Task<string> GetCurrentUser(string token)
     {
         string baseUrl = _configuration.BaseUrl;
@@ -140,6 +167,11 @@ public class StraatosApiService : IStraatosApiService
         return await _httpService.GetAsync(getDocumentTypesUrl, token: token);
     }
 
+    /// <summary>
+    /// Retrieves tenant details from Straatos for the specified tenant ID.
+    /// </summary>
+    /// <param name="tenantId">The tenant identifier</param>
+    /// <returns>JSON string containing tenant details</returns>
     public async Task<string> GetTenantDetails(int? tenantId)
     {
         string baseUrl = _configuration.BaseUrl;
@@ -148,6 +180,14 @@ public class StraatosApiService : IStraatosApiService
         return await _httpService.GetAsync(tenantDetails);
     }
 
+    /// <summary>
+    /// Creates a JSON object for form data upload without file attachments.
+    /// </summary>
+    /// <param name="jsonData">The processed form data</param>
+    /// <param name="documentResponse">The document response containing form configuration</param>
+    /// <param name="uploadId">The upload identifier from Straatos</param>
+    /// <param name="raw">The raw form data</param>
+    /// <returns>A JSON object ready for upload</returns>
     private object CreateJsonObject(dynamic jsonData, DocumentResponse documentResponse, string uploadId, dynamic raw)
     {
         var jsonObject = new
@@ -177,6 +217,12 @@ public class StraatosApiService : IStraatosApiService
         return jsonObject;
     }
 
+    /// <summary>
+    /// Extracts file upload data from form fields for processing.
+    /// </summary>
+    /// <param name="jsonData">The form data containing file uploads</param>
+    /// <param name="documentResponse">The document response containing field definitions</param>
+    /// <returns>A list of file upload additional data objects</returns>
     private List<FileUploadAdditionalData> GetFileUploads(dynamic jsonData, DocumentResponse documentResponse)
     {
         List<FileUploadAdditionalData> fileUploads = new List<FileUploadAdditionalData>();

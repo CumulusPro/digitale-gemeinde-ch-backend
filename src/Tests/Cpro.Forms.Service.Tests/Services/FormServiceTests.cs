@@ -162,7 +162,7 @@ public class FormServiceTests
     public async Task SearchFormData_ReturnsPagingResponse_WhenFormsFound()
     {
         // Arrange
-        var searchRequest = new FormSearchRequest();
+        var searchRequest = new FormSearchRequest { Keyword = "Form", FormId = "1", Status = "Completed", Page = 1, PageSize = 10 };
         var tenantId = 1;
         var expectedData = new List<FormData>
         {

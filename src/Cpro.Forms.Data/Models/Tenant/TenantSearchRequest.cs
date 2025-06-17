@@ -2,5 +2,5 @@
 
 public class TenantSearchRequest : SearchRequest
 {
-    public string? TenantName { get; set; }
+    public string TenantName { get; set; }
 }

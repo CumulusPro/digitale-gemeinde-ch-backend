@@ -1,3 +1,4 @@
+using Cpro.Forms.Data.Models.Tenant;
 using Cpro.Forms.Data.Repositories;
 using Cpro.Forms.Service.Models.User;
 using Cpro.Forms.Service.Services;
@@ -162,4 +163,57 @@ public class UserServiceTests
         _userRepositoryMock.Verify(x => x.SearchUsers(It.IsAny<Data.Models.User.UserSearchRequest>()), Times.Once);
         _mapperMock.Verify(x => x.Map<PagingResponse<UserResponse>>(It.IsAny<PagingResponse<Data.Models.User.User>>()), Times.Once);
     }
+
+    [Fact]
+    public async Task GetTenantsByUserEmailAsync_ReturnsTenantResponses_WhenUserExistsInMultipleTenants()
+    {
+        // Arrange
+        string email = "user@example.com";
+        var users = new List<Data.Models.User.User>
+        {
+            new Data.Models.User.User { Id = Guid.NewGuid(), TenantId = 1 },
+            new Data.Models.User.User { Id = Guid.NewGuid(), TenantId = 2 }
+        };
+        var tenant1 = new Tenant { TenantId = 1, TenantName = "Tenant A" };
+        var tenant2 = new Tenant { TenantId = 2, TenantName = "Tenant B" };
+
+        _userRepositoryMock.Setup(x => x.GetUsersByEmailAsync(email)).ReturnsAsync(users);
+        _tenantRepositoryMock.Setup(x => x.GetTenantByIdAsync(1)).ReturnsAsync(tenant1);
+        _tenantRepositoryMock.Setup(x => x.GetTenantByIdAsync(2)).ReturnsAsync(tenant2);
+
+        // Act
+        var result = await _userService.GetTenantsByUserEmailAsync(email);
+
+        // Assert
+        Assert.Equal(2, result.Count);
+        Assert.Contains(result, t => t.Id == 1 && t.Name == "Tenant A");
+        Assert.Contains(result, t => t.Id == 2 && t.Name == "Tenant B");
+
+        _userRepositoryMock.Verify(x => x.GetUsersByEmailAsync(email), Times.Once);
+        _tenantRepositoryMock.Verify(x => x.GetTenantByIdAsync(1), Times.Once);
+        _tenantRepositoryMock.Verify(x => x.GetTenantByIdAsync(2), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetUserByEmailAndTenantAsync_ReturnsMappedUserResponse_WhenUserExists()
+    {
+        // Arrange
+        string email = "user@example.com";
+        int tenantId = 1;
+        var user = new Data.Models.User.User { Id = Guid.NewGuid(), Email = email, TenantId = tenantId };
+        var expectedResponse = new UserResponse { Id = user.Id, Email = email };
+
+        _userRepositoryMock.Setup(x => x.GetUserByEmailAndTenantAsync(email, tenantId)).ReturnsAsync(user);
+        _mapperMock.Setup(x => x.Map<UserResponse?>(user)).Returns(expectedResponse);
+
+        // Act
+        var result = await _userService.GetUserByEmailAndTenantAsync(email, tenantId);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(expectedResponse, result);
+        _userRepositoryMock.Verify(x => x.GetUserByEmailAndTenantAsync(email, tenantId), Times.Once);
+        _mapperMock.Verify(x => x.Map<UserResponse?>(user), Times.Once);
+    }
+
 }
