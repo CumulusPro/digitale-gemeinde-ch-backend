@@ -49,13 +49,13 @@ jobs:
     pool:
       vmImage: ubuntu-latest
     steps:
-      - task: SonarCloudPrepare@1
-        displayName: 'SonarCloud Prep'
-        inputs:
-          SonarCloud: 'SonarCloud'
-          organization: 'cumuluspro2'
-          scannerMode: 'MSBuild'
-          projectKey: 'formdesignerbackend'
+    #  - task: SonarCloudPrepare@1
+    #    displayName: 'SonarCloud Prep'
+    #    inputs:
+    #      SonarCloud: 'SonarCloud'
+    #      organization: 'cumuluspro2'
+    #      scannerMode: 'MSBuild'
+    #      projectKey: 'formdesignerbackend'
 
       - task: UseDotNet@2
         inputs:
@@ -88,8 +88,8 @@ jobs:
         inputs:
           ArtifactName: 'drop'
 
-      - task: SonarCloudAnalyze@1
-        displayName: 'SonarCloud Analyse'
+     # - task: SonarCloudAnalyze@1
+     #   displayName: 'SonarCloud Analyse'
 
   # - job: Scan
   #   displayName: 'Security Scan and SBOM Upload'
