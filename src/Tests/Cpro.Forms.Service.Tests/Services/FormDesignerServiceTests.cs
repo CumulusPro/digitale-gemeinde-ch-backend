@@ -37,8 +37,8 @@ public class FormDesignerServiceTests
         {
             Name = "Test Form",
             Fields = new List<Fields>(),
-            designers = new List<int> { 1 },
-            processors = new List<int> { 1 },
+            designers = new List<string> { "designer1@test.com" },
+            processors = new List<string> { "processor1@test.com" },
             formStatesConfig = new List<FormStatesConfig>()
         };
         var formId = string.Empty;
@@ -134,24 +134,25 @@ public class FormDesignerServiceTests
         // Arrange
         var searchRequest = new SearchRequest();
         var tenantId = 1;
+        var email = "test@example.com";
         var expectedDataModel = new Data.Models.SearchRequest();
         var expectedFormDesigns = new PagingResponse<Data.Models.FormDesign>();
         var expectedResponse = new PagingResponse<FormDesign>();
 
         _mapperMock.Setup(x => x.Map<Data.Models.SearchRequest>(searchRequest))
             .Returns(expectedDataModel);
-        _formDesignRepositoryMock.Setup(x => x.SearchFormDesignsAsync(expectedDataModel, tenantId))
+        _formDesignRepositoryMock.Setup(x => x.SearchFormDesignsAsync(expectedDataModel, tenantId, email))
             .ReturnsAsync(expectedFormDesigns);
         _mapperMock.Setup(x => x.Map<PagingResponse<FormDesign>>(expectedFormDesigns))
             .Returns(expectedResponse);
 
         // Act
-        var result = await _formDesignerService.SearchFormDesignsAsync(searchRequest, tenantId);
+        var result = await _formDesignerService.SearchFormDesignsAsync(searchRequest, tenantId, email);
 
         // Assert
         Assert.Equal(expectedResponse, result);
         _mapperMock.Verify(x => x.Map<Data.Models.SearchRequest>(searchRequest), Times.Once);
-        _formDesignRepositoryMock.Verify(x => x.SearchFormDesignsAsync(expectedDataModel, tenantId), Times.Once);
+        _formDesignRepositoryMock.Verify(x => x.SearchFormDesignsAsync(expectedDataModel, tenantId, email), Times.Once);
         _mapperMock.Verify(x => x.Map<PagingResponse<FormDesign>>(expectedFormDesigns), Times.Once);
     }
 
@@ -209,8 +210,8 @@ public class FormDesignerServiceTests
         {
             new Fields { Id = null, Name = "Field1", DisplayName = "Field 1", IsRequired = true, Datatype = "string" }
         },
-            designers = new List<int>(),
-            processors = new List<int>(),
+            designers = new List<string>(),
+            processors = new List<string>(),
             formStatesConfig = new List<FormStatesConfig>()
         };
 
@@ -333,11 +334,11 @@ public class FormDesignerServiceTests
             Version = 1,
             Designers = new List<Data.Models.Designer>
             {
-                new Data.Models.Designer { DesignerId = 10, FormDesignId = formId }
+                new Data.Models.Designer { Email = "designer1@test.com", FormDesignId = formId }
             },
             Processors = new List<Data.Models.Processor>
             {
-                new Data.Models.Processor { ProcessorId = 20, FormDesignId = formId }
+                new Data.Models.Processor { Email = "processor1@test.com", FormDesignId = formId }
             },
             FormStates = new List<Data.Models.FormStatesConfig>
             {
@@ -359,11 +360,11 @@ public class FormDesignerServiceTests
             Version = 1,
             Designers = new List<Data.Models.Designer>
             {
-                new Data.Models.Designer { DesignerId = 10, FormDesignId = formId }
+                new Data.Models.Designer { Email = "designer1@test.com", FormDesignId = formId }
             },
             Processors = new List<Data.Models.Processor>
             {
-                new Data.Models.Processor { ProcessorId = 20, FormDesignId = formId }
+                new Data.Models.Processor { Email = "processor1@test.com", FormDesignId = formId }
             },
             FormStates = new List<Data.Models.FormStatesConfig>
             {

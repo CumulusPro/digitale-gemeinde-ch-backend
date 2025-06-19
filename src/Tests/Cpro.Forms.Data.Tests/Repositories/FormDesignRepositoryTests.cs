@@ -1,5 +1,6 @@
 using Cpro.Forms.Data.Infrastructure;
 using Cpro.Forms.Data.Models;
+using Cpro.Forms.Data.Models.User;
 using Cpro.Forms.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -198,10 +199,56 @@ public class FormDesignRepositoryTests
     }
 
     [Fact]
-    public async Task SearchFormDesignsAsync_WithKeywordAndTenantId_ReturnsPagedResult()
+    public async Task SearchFormDesignsAsync_AsDesigner_SeesOnlyAssignedDesigns()
     {
         // Arrange
         var tenantId = 1;
+        var designerEmail = "designer@test.com";
+
+        var user = new User { Email = designerEmail, Role = Role.Designer, TenantId = tenantId };
+        await _dbContext.Users.AddAsync(user);
+
+        var formDesign = new FormDesign
+        {
+            Id = "search-2",
+            Name = "Employee Info",
+            TenantId = tenantId,
+            TenantName = "Test Tenant",
+            Designers = new List<Designer>
+            {
+                new Designer { Email = designerEmail }
+            }
+        };
+
+        await _dbContext.FormDesigns.AddAsync(formDesign);
+        await _dbContext.SaveChangesAsync();
+
+        var searchRequest = new SearchRequest
+        {
+            Page = 1,
+            PageSize = 10,
+            Keyword = "Employee"
+        };
+
+        // Act
+        var result = await _repository.SearchFormDesignsAsync(searchRequest, tenantId, designerEmail);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(1, result.TotalCount);
+        Assert.Single(result.Data);
+        Assert.Equal("Employee Info", result.Data.First().Name);
+    }
+
+    [Fact]
+    public async Task SearchFormDesignsAsync_AsAdmin_SeesAllMatchingForms()
+    {
+        // Arrange
+        var tenantId = 1;
+        var adminEmail = "admin@test.com";
+
+        var user = new User { Email = adminEmail, Role = Role.Admin, TenantId = tenantId };
+        await _dbContext.Users.AddAsync(user);
 
         var tag = new Tag { TagName = "HR" };
         await _dbContext.Tags.AddAsync(tag);
@@ -219,7 +266,7 @@ public class FormDesignRepositoryTests
             }
         };
 
-        _dbContext.FormDesigns.Add(formDesign);
+        await _dbContext.FormDesigns.AddAsync(formDesign);
         await _dbContext.SaveChangesAsync();
 
         var searchRequest = new SearchRequest
@@ -230,13 +277,55 @@ public class FormDesignRepositoryTests
         };
 
         // Act
-        var result = await _repository.SearchFormDesignsAsync(searchRequest, tenantId);
+        var result = await _repository.SearchFormDesignsAsync(searchRequest, tenantId, adminEmail);
 
         // Assert
         Assert.NotNull(result);
         Assert.Equal(1, result.TotalCount);
         Assert.Single(result.Data);
         Assert.Equal("Onboarding Form", result.Data.First().Name);
+    }
+
+    [Fact]
+    public async Task SearchFormDesignsAsync_AsProcessor_SeesOnlyAssignedDesigns()
+    {
+        // Arrange
+        var tenantId = 1;
+        var processorEmail = "processor@test.com";
+
+        var user = new User { Email = processorEmail, Role = Role.Processor, TenantId = tenantId };
+        await _dbContext.Users.AddAsync(user);
+
+        var formDesign = new FormDesign
+        {
+            Id = "search-3",
+            Name = "Payroll Form",
+            TenantId = tenantId,
+            TenantName = "Test Tenant",
+            Processors = new List<Processor>
+            {
+                new Processor { Email = processorEmail }
+            }
+        };
+
+        await _dbContext.FormDesigns.AddAsync(formDesign);
+        await _dbContext.SaveChangesAsync();
+
+        var searchRequest = new SearchRequest
+        {
+            Page = 1,
+            PageSize = 10,
+            Keyword = "Payroll"
+        };
+
+        // Act
+        var result = await _repository.SearchFormDesignsAsync(searchRequest, tenantId, processorEmail);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(1, result.TotalCount);
+        Assert.Single(result.Data);
+        Assert.Equal("Payroll Form", result.Data.First().Name);
     }
 
     [Fact]

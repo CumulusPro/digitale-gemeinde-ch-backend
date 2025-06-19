@@ -27,10 +27,10 @@ public class FormStatesConfig
 
 public class Designer
 {
-    public int DesignerId { get; set; }
+    public string Email { get; set; }
 }
 
 public class Processor
 {
-    public int ProcessorId { get; set; }
+    public string Email { get; set; }
 }

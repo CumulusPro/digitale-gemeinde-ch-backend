@@ -119,11 +119,11 @@ public class FormDesignerHistoryServiceTests
             CreatedBy = "test@example.com",
             Designers = new List<Data.Models.Designer>
             {
-                new() { DesignerId = 1, FormDesignId = "test-id" }
+                new() { Email = "test@example.com", FormDesignId = "test-id" }
             },
             Processors = new List<Data.Models.Processor>
             {
-                new() { ProcessorId = 1, FormDesignId = "test-id" }
+                new() { Email = "test@example.com", FormDesignId = "test-id" }
             },
             FormStates = new List<Data.Models.FormStatesConfig>
             {

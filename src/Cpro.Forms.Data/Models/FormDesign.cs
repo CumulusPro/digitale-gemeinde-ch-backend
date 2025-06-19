@@ -30,14 +30,14 @@ public class FormStatesConfig
 public class Designer
 {
     public int Id { get; set; }
-    public int DesignerId { get; set; }
+    public string Email { get; set; }
     public string FormDesignId { get; set; }
 }
 
 public class Processor
 {
     public int Id { get; set; }
-    public int ProcessorId { get; set; }
+    public string Email { get; set; }
     public string FormDesignId { get; set; }
 }
 

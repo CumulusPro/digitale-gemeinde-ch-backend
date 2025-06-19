@@ -8,6 +8,9 @@ using System.Reflection;
 
 namespace Peritos.Common.Logging.ApplicationInsights
 {
+    /// <summary>
+    /// A telemetry initializer that adds custom properties to Application Insights telemetry data.
+    /// </summary>
     public class CustomPropertyTelemetryInitializer : ITelemetryInitializer
     {
         private readonly IServiceProvider _serviceProvider;
@@ -17,6 +20,10 @@ namespace Peritos.Common.Logging.ApplicationInsights
             _serviceProvider = serviceProvider;
         }
 
+        /// <summary>
+        /// Initializes the telemetry item with custom properties such as correlation ID, application platform, version, name, and host identifier.
+        /// </summary>
+        /// <param name="telemetry">The telemetry item to initialize.</param>
         public void Initialize(ITelemetry telemetry)
         {
             var correlationService = _serviceProvider.GetRequiredService<ICorrelationService>();

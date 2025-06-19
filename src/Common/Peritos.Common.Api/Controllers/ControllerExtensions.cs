@@ -8,8 +8,16 @@ using Peritos.Common.Api.Filters;
 
 namespace Peritos.Common.Api.Controllers
 {
+    /// <summary>
+    /// Provides extension methods for registering and configuring controllers in the service collection.
+    /// </summary>
     public static class ControllerExtensions
     {
+        /// <summary>
+        /// Adds PKS controllers to the service collection and configures global filters, including authentication and JSON serialization.
+        /// </summary>
+        /// <param name="services">The service collection.</param>
+        /// <param name="configuration">The application configuration.</param>
         public static void AddPKSControllers(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddControllers(options =>

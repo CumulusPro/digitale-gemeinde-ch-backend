@@ -90,7 +90,7 @@ public class FormService : IFormService
         Console.WriteLine($"Current User Id: {currentUser.Id}");
 
         var documenTypeResponse = await _formDesignerService.GetFormDefinitionResponseAsync(formId, tenantId);
-        documenTypeResponse.isFormConfigDisabled = !documenTypeResponse?.designers?.Contains(currentUser.Id);
+        documenTypeResponse.isFormConfigDisabled = !documenTypeResponse?.designers?.Contains(currentUser.Emails.FirstOrDefault());
 
         return documenTypeResponse;
     }

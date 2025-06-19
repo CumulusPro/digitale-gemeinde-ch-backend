@@ -6,8 +6,8 @@ public class FieldRequest
     public string DocumentTypeName { get; set; }
     public string Name { get; set; }
     public List<Fields> Fields { get; set; }
-    public List<int>? designers { get; set; }
-    public List<int>? processors { get; set; }
+    public List<string>? designers { get; set; }
+    public List<string>? processors { get; set; }
     public List<FormStatesConfig>? formStatesConfig { get; set; }
     public Header? header { get; set; }
     public Footer? footer { get; set; }

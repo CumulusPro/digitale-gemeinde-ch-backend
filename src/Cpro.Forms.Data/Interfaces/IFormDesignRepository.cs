@@ -12,7 +12,7 @@ public interface IFormDesignRepository : IRepository<FormDesign>
     public Task<List<FormDesign>> GetFormDesignsByTenantId(int tenantId);
     public Task<int> GetFormDesignCountAsync();
     public Task<FormDesign> DeleteFormDesignAsync(string formId, int tenantId);
-    public Task<PagingResponse<FormDesign>> SearchFormDesignsAsync(SearchRequest searchParameters, int tenantId);
+    public Task<PagingResponse<FormDesign>> SearchFormDesignsAsync(SearchRequest searchParameters, int tenantId, string email);
     public Task<FormDesign> UpdateFormDesignAsync(string formId, FormDesign formDesign);
     Task<List<Tag>> GetTagsByNamesAsync(List<string> names);
     Task AddTagsAsync(List<Tag> tags);

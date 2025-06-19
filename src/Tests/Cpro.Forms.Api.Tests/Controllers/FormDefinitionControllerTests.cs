@@ -122,10 +122,12 @@ public class FormDefinitionControllerTests
     public async Task SearchFormDesigns_ReturnsOkResult_WhenFormsFound()
     {
         // Arrange
+        var userEmail = "test@example.com";
         var searchRequest = new SearchRequest();
         var tenantId = 1;
         var expectedResponse = new PagingResponse<FormDesign>();
-        _formServiceMock.Setup(x => x.SearchFormDesignsAsync(searchRequest, tenantId))
+        _requestContextMock.Setup(x => x.UserEmail).Returns(userEmail);
+        _formServiceMock.Setup(x => x.SearchFormDesignsAsync(searchRequest, tenantId, userEmail))
             .ReturnsAsync(expectedResponse);
 
         // Act

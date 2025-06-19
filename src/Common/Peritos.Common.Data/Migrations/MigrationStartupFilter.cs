@@ -9,6 +9,12 @@ namespace Peritos.Common.Data.Migrations
     //A startup filter that when a web app starts, it migrates the context. 
     public class MigrationStartupFilter<TContext> : IStartupFilter where TContext : DbContext
     {
+        /// <summary>
+        /// Configures the application builder to apply any pending migrations for the <typeparamref name="TContext"/>
+        /// database context during app startup, before the next middleware is configured.
+        /// </summary>
+        /// <param name="next">The next configuration action to invoke.</param>
+        /// <returns>An action that configures the application builder.</returns>
         public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next)
         {
             return app =>

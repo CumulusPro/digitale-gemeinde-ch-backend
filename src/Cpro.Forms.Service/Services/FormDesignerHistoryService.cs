@@ -82,14 +82,14 @@ public class FormDesignerHistoryService : IFormDesignerHistoryService
 
         history.Designers = formDesign.Designers.Select(d => new Data.Models.DesignerHistory
         {
-            DesignerHistoryId = d.DesignerId,
+            Email = d.Email,
             FormDesignId = formDesign.Id,
             FormVersion = formDesign.Version
         }).ToList();
 
         history.Processors = formDesign.Processors.Select(p => new Data.Models.ProcessorHistory
         {
-            ProcessorHistoryId = p.ProcessorId,
+            Email = p.Email,
             FormDesignId = formDesign.Id,
             FormVersion = formDesign.Version
         }).ToList();

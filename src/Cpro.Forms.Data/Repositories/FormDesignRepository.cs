@@ -1,5 +1,6 @@
 ﻿using Cpro.Forms.Data.Infrastructure;
 using Cpro.Forms.Data.Models;
+using Cpro.Forms.Data.Models.User;
 using Microsoft.EntityFrameworkCore;
 using Peritos.Common.Abstractions;
 using Peritos.Common.Abstractions.Paging;
@@ -120,14 +121,30 @@ public class FormDesignRepository : RepositoryBase<FormDesign, SqlContext>, IFor
     /// </summary>
     /// <param name="searchParameters">The search criteria including keywords and ordering</param>
     /// <param name="tenantId">The tenant identifier</param>
+    /// <param name="email">logged in user's email</param>
     /// <returns>A paged response containing matching form designs</returns>
-    public async Task<PagingResponse<FormDesign>> SearchFormDesignsAsync(SearchRequest searchParameters, int tenantId)
+    public async Task<PagingResponse<FormDesign>> SearchFormDesignsAsync(SearchRequest searchParameters, int tenantId, string email)
     {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email && u.TenantId == tenantId)
+            ?? throw new KeyNotFoundException($"User not found with email: {email}");
+
         var query = _context.FormDesigns
-            .Include(f => f.Tags)
-            .ThenInclude(fdt => fdt.Tag)
+            .Include(f => f.Tags).ThenInclude(fdt => fdt.Tag)
+            .Include(f => f.Designers)
+            .Include(f => f.Processors)
             .Where(x => x.Id != null && x.TenantId == tenantId)
             .AsQueryable();
+
+        //Role - based filtering
+        if (user.Role == Role.Designer)
+        {
+            query = query.Where(f => f.Designers.Any(d => d.Email == email));
+        }
+        else if (user.Role == Role.Processor)
+        {
+            query = query.Where(f => f.Processors.Any(p => p.Email == email));
+        }
+        // Admins see everything, no filter needed
 
         if (!string.IsNullOrWhiteSpace(searchParameters.Keyword))
         {
@@ -142,7 +159,6 @@ public class FormDesignRepository : RepositoryBase<FormDesign, SqlContext>, IFor
         {
             query = query.OrderByDescending(t => t.DateUpdated);
         }
- 
 
         var totalItemCount = await query.CountAsync();
         var searchResults = await query.ToPagedList(searchParameters);

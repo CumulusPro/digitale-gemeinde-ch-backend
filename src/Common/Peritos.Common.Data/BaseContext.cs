@@ -8,6 +8,11 @@ using System.Threading.Tasks;
 
 namespace Peritos.Common.Data
 {
+    /// <summary>
+    /// Base Entity Framework DbContext that applies auditing conventions and automatically
+    /// sets audit fields on entities implementing <see cref="Auditable"/>.
+    /// </summary>
+    /// <typeparam name="TContext">The specific DbContext type.</typeparam>
     public class BaseContext<TContext> : DbContext where TContext : DbContext
     {
         private readonly IRequestContext _requestContext;
@@ -23,6 +28,12 @@ namespace Peritos.Common.Data
             base.OnModelCreating(modelBuilder);
         }
 
+        /// <summary>
+        /// Saves all changes made in this context to the database asynchronously.
+        /// Automatically sets audit fields on entities that implement <see cref="Auditable"/>.
+        /// </summary>
+        /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
+        /// <returns>The number of state entries written to the database.</returns>
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             var insertedEntries = this.ChangeTracker.Entries()

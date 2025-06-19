@@ -194,12 +194,12 @@ public class FormDesignerService : IFormDesignerService
             StorageUrl = $"{newFormId}/v1.json",
             Designers = originalForm.Designers?.Select(designer => new Data.Models.Designer
             {
-                DesignerId = designer.DesignerId,
+                Email = designer.Email,
                 FormDesignId = newFormId
             }).ToList() ?? new List<Data.Models.Designer>(),
             Processors = originalForm.Processors?.Select(processor => new Data.Models.Processor
             {
-                ProcessorId = processor.ProcessorId,
+                Email = processor.Email,
                 FormDesignId = newFormId
             }).ToList() ?? new List<Data.Models.Processor>(),
             FormStates = originalForm.FormStates?.Select(s => new Data.Models.FormStatesConfig
@@ -246,11 +246,12 @@ public class FormDesignerService : IFormDesignerService
     /// </summary>
     /// <param name="searchRequest">The search criteria</param>
     /// <param name="tenantId">The tenant identifier</param>
+    /// <param name="email">logged in user's email</param>
     /// <returns>A paged response containing matching form designs</returns>
-    public async Task<PagingResponse<FormDesign>> SearchFormDesignsAsync(SearchRequest searchRequest, int tenantId)
+    public async Task<PagingResponse<FormDesign>> SearchFormDesignsAsync(SearchRequest searchRequest, int tenantId, string email)
     {
         var datamodel = _mapper.Map<Data.Models.SearchRequest>(searchRequest);
-        var formDesigns = await _formDesignRepository.SearchFormDesignsAsync(datamodel, tenantId);
+        var formDesigns = await _formDesignRepository.SearchFormDesignsAsync(datamodel, tenantId, email);
         return _mapper.Map<PagingResponse<FormDesign>>(formDesigns);
     }
 
@@ -359,8 +360,8 @@ public class FormDesignerService : IFormDesignerService
         var incomingProcessors = MapToProcessors(fieldRequest.processors, formId);
         var incomingStates = MapToFormStates(fieldRequest.formStatesConfig, formId);
 
-        SyncCollection(formDesign.Processors, incomingProcessors, x => x.ProcessorId);
-        SyncCollection(formDesign.Designers, incomingDesigners, x => x.DesignerId);
+        SyncCollection(formDesign.Processors, incomingProcessors, x => x.Email);
+        SyncCollection(formDesign.Designers, incomingDesigners, x => x.Email);
         SyncCollection(formDesign.FormStates, incomingStates, x => $"{x.Label.ToLower()}|{x.Value.ToLower()}");
 
         formDesign.Version += 1;
@@ -369,20 +370,20 @@ public class FormDesignerService : IFormDesignerService
         return await _formDesignRepository.UpdateFormDesignAsync(formId, formDesign);
     }
 
-    private List<Data.Models.Designer> MapToDesigners(List<int> designers, string formId)
+    private List<Data.Models.Designer> MapToDesigners(List<string> designers, string formId)
     {
-        return designers.Select(designerId => new Data.Models.Designer
+        return designers.Select(designerEmail => new Data.Models.Designer
         {
-            DesignerId = designerId,
+            Email = designerEmail,
             FormDesignId = formId
         }).ToList();
     }
 
-    private List<Data.Models.Processor> MapToProcessors(List<int> processors, string formId)
+    private List<Data.Models.Processor> MapToProcessors(List<string> processors, string formId)
     {
-        return processors.Select(processorId => new Data.Models.Processor
+        return processors.Select(processorEmail => new Data.Models.Processor
         {
-            ProcessorId = processorId,
+            Email = processorEmail,
             FormDesignId = formId
         }).ToList();
     }

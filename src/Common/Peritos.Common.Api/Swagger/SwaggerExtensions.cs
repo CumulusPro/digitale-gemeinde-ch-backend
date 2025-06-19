@@ -9,8 +9,20 @@ using System.Collections.Generic;
 
 namespace Peritos.Common.Api.Swagger
 {
+    /// <summary>
+    /// Extension methods for configuring Swagger (OpenAPI) in an ASP.NET Core application.
+    /// </summary>
     public static class SwaggerExtensions
     {
+        /// <summary>
+        /// Adds and configures Swagger generation services, including optional OAuth2 security and custom filters.
+        /// </summary>
+        /// <param name="services">The <see cref="IServiceCollection"/> to add the Swagger services to.</param>
+        /// <param name="configuration">Application configuration, used to read Swagger authentication settings.</param>
+        /// <param name="additionalSwaggerOptions">
+        /// Optional action to configure additional <see cref="SwaggerGenOptions"/> settings.
+        /// </param>
+        /// <returns>The updated <see cref="IServiceCollection"/>.</returns>
         public static IServiceCollection AddPKSSwagger(this IServiceCollection services, IConfiguration configuration, 
                                                     Action<SwaggerGenOptions> additionalSwaggerOptions = null)
         {
@@ -58,6 +70,14 @@ namespace Peritos.Common.Api.Swagger
             });
         }
 
+        /// <summary>
+        /// Configures the application's middleware to serve Swagger and Swagger UI endpoints.
+        /// </summary>
+        /// <param name="app">The <see cref="IApplicationBuilder"/> used to configure the request pipeline.</param>
+        /// <param name="configuration">Application configuration, used for setting up Swagger authentication.</param>
+        /// <param name="additionalSwaggerOptions">
+        /// Optional action to configure additional <see cref="SwaggerUIOptions"/> settings.
+        /// </param>
         public static void UsePKSSwagger(this IApplicationBuilder app, IConfiguration configuration, Action<SwaggerUIOptions> additionalSwaggerOptions = null)
         {
             app.UseSwagger();

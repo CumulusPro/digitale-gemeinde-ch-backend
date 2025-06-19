@@ -13,8 +13,16 @@ using System.Threading.Tasks;
 
 namespace Peritos.Common.Api.Authentication
 {
+    /// <summary>
+    /// Provides extension methods for configuring authentication in the application.
+    /// </summary>
     public static class AuthenticationExtensions
     {
+        /// <summary>
+        /// Adds PKS authentication schemes (B2C, AAD, None) to the service collection based on configuration.
+        /// </summary>
+        /// <param name="services">The service collection.</param>
+        /// <param name="configuration">The application configuration.</param>
         public static void AddPKSAuthentication(this IServiceCollection services, IConfiguration configuration)
         {
             if (!string.IsNullOrWhiteSpace(configuration["Authentication:Authority"]))
@@ -57,6 +65,11 @@ namespace Peritos.Common.Api.Authentication
             }
         }
 
+        /// <summary>
+        /// Configures the application to use authentication and authorization middleware if authentication is set up.
+        /// </summary>
+        /// <param name="app">The application builder.</param>
+        /// <param name="configuration">The application configuration.</param>
         public static void UsePKSAuthentication(this IApplicationBuilder app, IConfiguration configuration)
         {
             if (!string.IsNullOrWhiteSpace(configuration["Authentication:Authority"]))
@@ -67,7 +80,9 @@ namespace Peritos.Common.Api.Authentication
         }
     }
 
-
+    /// <summary>
+    /// Authentication handler that always returns no result, effectively disabling authentication.
+    /// </summary>
     public class NoAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
     {
         public NoAuthenticationHandler(
@@ -79,6 +94,10 @@ namespace Peritos.Common.Api.Authentication
         {
         }
 
+        /// <summary>
+        /// Handles authentication by returning no result.
+        /// </summary>
+        /// <returns>An authentication result indicating no result.</returns>
         protected override Task<AuthenticateResult> HandleAuthenticateAsync()
         {
             // Return NoResult so that authentication is essentially skipped.

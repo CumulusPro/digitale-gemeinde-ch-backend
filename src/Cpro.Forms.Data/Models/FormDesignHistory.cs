@@ -30,7 +30,7 @@ public class FormStatesConfigHistory
 public class DesignerHistory
 {
     public int Id { get; set; }
-    public int DesignerHistoryId { get; set; }
+    public string Email { get; set; }
     public string FormDesignId { get; set; }
     public int FormVersion { get; set; }
 }
@@ -38,7 +38,7 @@ public class DesignerHistory
 public class ProcessorHistory
 {
     public int Id { get; set; }
-    public int ProcessorHistoryId { get; set; }
+    public string Email { get; set; }
     public string FormDesignId { get; set; }
     public int FormVersion { get; set; }
 }

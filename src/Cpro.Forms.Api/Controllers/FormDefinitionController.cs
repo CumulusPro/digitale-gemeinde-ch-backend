@@ -104,7 +104,7 @@ public class FormDefinitionController : Controller
     [HttpPost("search")]
     public async Task<ActionResult<PagingResponse<FormDesign>>> SearchFormDesigns([FromBody] SearchRequest searchRequest, [FromQuery] int tenantId)
     {
-        var form = await _formService.SearchFormDesignsAsync(searchRequest, tenantId);
+        var form = await _formService.SearchFormDesignsAsync(searchRequest, tenantId, _requestContext.UserEmail);
         return Ok(form);
     }
 

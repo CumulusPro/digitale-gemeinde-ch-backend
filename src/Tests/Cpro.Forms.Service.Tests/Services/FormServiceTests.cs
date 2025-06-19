@@ -95,7 +95,7 @@ public class FormServiceTests
         var documentId = string.Empty;
         var expectedResponse = new DocumentResponse
         {
-            designers = new List<int> { 1 }
+            designers = new List<string> { "test@example.com" }
         };
 
         _requestContextMock.Setup(x => x.UserEmail)

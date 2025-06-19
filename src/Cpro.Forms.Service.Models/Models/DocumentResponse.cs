@@ -8,8 +8,8 @@ public class DocumentResponse
     public string DocumentTypeName { get; set; }
     public string Name { get; set; }
     public string Category { get; set; }
-    public List<int>? designers { get; set; }
-    public List<int>? processors { get; set; }
+    public List<string>? designers { get; set; }
+    public List<string>? processors { get; set; }
     public List<FormStatesConfig>? formStatesConfig { get; set; }
     public List<IndexField> Fields { get; set; }
     public bool ShowSubmit { get; set; } = true;

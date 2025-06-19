@@ -3,11 +3,14 @@ using System;
 namespace Peritos.Common.Abstractions
 {
     /// <summary>
-    /// An exception that allows other layers to "bubble up" exceptions. These will be caught and handled appropriately. 
+    /// An exception that allows other layers to propagate exceptions. These will be caught and handled appropriately by the API layer.
     /// </summary>
     [Serializable]
     public class ApiException : Exception
     {
+        /// <summary>
+        /// Gets the HTTP status code associated with this exception.
+        /// </summary>
         public int HttpStatusCode { get; }
 
         public ApiException(string message) : base(message)

@@ -9,17 +9,24 @@ using System.Net.Http;
 
 namespace Peritos.Common.Api.Filters
 {
+    /// <summary>
+    /// Exception filter that handles API exceptions and maps them to appropriate HTTP responses.
+    /// </summary>
     public class ApiExceptionFilter : ExceptionFilterAttribute
     {
+        private readonly ILogger _logger;
+        private readonly ProblemDetailsFactory _problemDetailsFactory;
+
         public ApiExceptionFilter(ILogger<ApiExceptionFilter> logger, ProblemDetailsFactory problemDetailsFactory)
         {
             _logger = logger;
             _problemDetailsFactory = problemDetailsFactory;
         }
 
-        private readonly ILogger _logger;
-        private readonly ProblemDetailsFactory _problemDetailsFactory;
-
+        /// <summary>
+        /// Called when an exception occurs. Maps exceptions to HTTP responses and logs the error.
+        /// </summary>
+        /// <param name="context">The exception context.</param>
         public override void OnException(ExceptionContext context)
         {
             if (context.ExceptionHandled)
@@ -45,6 +52,11 @@ namespace Peritos.Common.Api.Filters
             context.ExceptionHandled = true;
         }
 
+        /// <summary>
+        /// Maps an exception to an HTTP status code and message.
+        /// </summary>
+        /// <param name="exception">The exception to map.</param>
+        /// <returns>A tuple containing the status code and message.</returns>
         private (int statusCode, string message) MapExceptionToResponse(Exception exception)
         {
             return exception switch
