@@ -1,7 +1,6 @@
 ﻿using Azure.Storage.Blobs;
 using Azure.Storage.Sas;
 using Cpro.Forms.Integration.Storage.Configuration;
-using Microsoft.WindowsAzure.Storage.Blob;
 using System.Text;
 
 namespace Cpro.Forms.Integration.Storage.Services;
@@ -124,12 +123,12 @@ public class AzureBlobService : IAzureBlobService
     /// <param name="data">The byte array data to upload</param>
     public async Task UploadFile(string uploadFileUrl, byte[] data)
     {
+        var blobClient = new BlobClient(new Uri(uploadFileUrl));
+
         using (var memoryStream = new MemoryStream(data))
         {
             memoryStream.Position = 0;
-
-            CloudBlockBlob blob = new CloudBlockBlob(new Uri(uploadFileUrl));
-            await blob.UploadFromStreamAsync(memoryStream);
+            await blobClient.UploadAsync(memoryStream, overwrite: true);
         }
     }
 
