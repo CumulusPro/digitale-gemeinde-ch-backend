@@ -10,7 +10,6 @@ namespace Cpro.Forms.Api.Controllers;
 
 [Route("[controller]")]
 [ApiController]
-[AllowAnonymous]
 public class FormDefinitionController : Controller
 {
     private readonly IFormDesignerService _formService;
@@ -156,7 +155,7 @@ public class FormDefinitionController : Controller
         var fieldRequest = JsonConvert.DeserializeObject<FieldRequest>(jsonContent);
 
         // If existingFormId is passed, update the form. Else, create a new one.
-        var form = await _formService.CreateFormDefinitionAsync(fieldRequest, request.ExistingFormId, request.tenantId, _requestContext.UserEmail);
+        var form = await _formService.CreateFormDefinitionAsync(fieldRequest, request.ExistingFormId, request.tenantId, _requestContext.UserEmail, isImported: true);
 
         return Ok(form);
     }

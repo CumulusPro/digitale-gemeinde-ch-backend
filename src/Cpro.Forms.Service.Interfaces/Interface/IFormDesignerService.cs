@@ -5,7 +5,7 @@ namespace Cpro.Forms.Service.Services;
 
 public interface IFormDesignerService
 {
-    Task<FormDesign> CreateFormDefinitionAsync(FieldRequest fieldRequest, string formId, int? tenantId, string email);
+    Task<FormDesign> CreateFormDefinitionAsync(FieldRequest fieldRequest, string formId, int? tenantId, string email, bool isImported = false);
     Task<string> GetFormDataJsonAsync(string formId);
     Task<DocumentResponse> GetFormDefinitionResponseAsync(string formId, int? tenantId);
     Task<List<FormDesign>> GetFormDesignsByTenantIdAsync(int tenantId);

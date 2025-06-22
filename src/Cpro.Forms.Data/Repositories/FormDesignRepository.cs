@@ -64,13 +64,13 @@ public class FormDesignRepository : RepositoryBase<FormDesign, SqlContext>, IFor
     /// <returns>The form design with related entities if found; otherwise null</returns>
     public async Task<FormDesign?> GetFormDesignByFormId(string formId)
     {
-        return await GetAllWithInclude(
-            x => x.Id == formId,
-            x => x.FormStates,
-            x => x.Designers,
-            x => x.Processors,
-            x => x.Tags)
-        .FirstOrDefaultAsync();        
+        return await _context.FormDesigns
+            .Where(x => x.Id == formId)
+            .Include(x => x.FormStates)
+            .Include(x => x.Designers)
+            .Include(x => x.Processors)
+            .Include(x => x.Tags).ThenInclude(tag => tag.Tag)
+            .FirstOrDefaultAsync();
     }
 
     /// <summary>
