@@ -38,13 +38,13 @@ public class FormDesignerService : IFormDesignerService
     /// <param name="tenantId">The tenant identifier</param>
     /// <param name="email">The email of the user creating/updating the form</param>
     /// <returns>The created or updated form design</returns>
-    public async Task<FormDesign> CreateFormDefinitionAsync(FieldRequest fieldRequest, string formId, int? tenantId, string email)
+    public async Task<FormDesign> CreateFormDefinitionAsync(FieldRequest fieldRequest, string formId, int? tenantId, string email, bool isImported = false)
     {
         var tenant = Convert.ToInt32(tenantId);
         var formDesign = await _formDesignRepository.GetFormDesign(formId, tenant);
 
         formDesign = formDesign == null
-                        ? await CreateFormDesignAsync(fieldRequest, formId, email, tenant)
+                        ? await CreateFormDesignAsync(fieldRequest, formId, email, tenant, isImported)
                         : await UpdateFormDesignAsync(fieldRequest, formId, formDesign);
 
         if (fieldRequest.Fields.Any())
@@ -178,7 +178,7 @@ public class FormDesignerService : IFormDesignerService
     public async Task<FormDesign> DuplicateFormDefinitionAsync(string formId, string email)
     {
         var originalForm = await _formDesignRepository.GetFormDesignByFormId(formId)
-            ?? throw new FileNotFoundException($"Original FormDefinition not found with formId: {formId}"); ;
+            ?? throw new FileNotFoundException($"Original FormDefinition not found with formId: {formId}");
 
         var newFormId = Guid.NewGuid().ToString();
         var newFormCount = await _formDesignRepository.GetFormDesignCountAsync() + 1;
@@ -320,7 +320,7 @@ public class FormDesignerService : IFormDesignerService
         }
     }
 
-    private async Task<Data.Models.FormDesign?> CreateFormDesignAsync(FieldRequest fieldRequest, string formId, string email, int tenant)
+    private async Task<Data.Models.FormDesign?> CreateFormDesignAsync(FieldRequest fieldRequest, string formId, string email, int tenant, bool isImported)
     {
         var newFormId = string.IsNullOrWhiteSpace(formId) ? Guid.NewGuid().ToString() : formId;
         var formCount = await _formDesignRepository.GetFormDesignCountAsync() + 1;
@@ -328,7 +328,7 @@ public class FormDesignerService : IFormDesignerService
         var formDesign = new Data.Models.FormDesign()
         {
             Id = newFormId,
-            Name = fieldRequest.Name,
+            Name = isImported ? $"{fieldRequest.Name}_import_{DateTime.Now:yyyyMMdd}" : fieldRequest.Name,
             TenantId = tenant,
             FormId = formCount,
             TenantName = string.Empty,
@@ -343,7 +343,6 @@ public class FormDesignerService : IFormDesignerService
 
         return await _formDesignRepository.CreateFormDesignAsync(formDesign);
     }
-
 
     private async Task<Data.Models.FormDesign?> UpdateFormDesignAsync(FieldRequest fieldRequest, string formId, Data.Models.FormDesign formDesign)
     {

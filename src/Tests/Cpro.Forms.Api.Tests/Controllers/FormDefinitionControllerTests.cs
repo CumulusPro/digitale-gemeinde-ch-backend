@@ -53,7 +53,7 @@ public class FormDefinitionControllerTests
         var userEmail = "test@example.com";
         var expectedResponse = new FormDesign();
         _requestContextMock.Setup(x => x.UserEmail).Returns(userEmail);
-        _formServiceMock.Setup(x => x.CreateFormDefinitionAsync(fieldRequest, string.Empty, tenantId, userEmail))
+        _formServiceMock.Setup(x => x.CreateFormDefinitionAsync(fieldRequest, string.Empty, tenantId, userEmail, false))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -75,7 +75,7 @@ public class FormDefinitionControllerTests
         var userEmail = "test@example.com";
         var expectedResponse = new FormDesign();
         _requestContextMock.Setup(x => x.UserEmail).Returns(userEmail);
-        _formServiceMock.Setup(x => x.CreateFormDefinitionAsync(fieldRequest, formId, tenantId, userEmail))
+        _formServiceMock.Setup(x => x.CreateFormDefinitionAsync(fieldRequest, formId, tenantId, userEmail, false))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -226,7 +226,7 @@ public class FormDefinitionControllerTests
         var userEmail = "test@example.com";
         var expectedResponse = new FormDesign();
         _requestContextMock.Setup(x => x.UserEmail).Returns(userEmail);
-        _formServiceMock.Setup(x => x.CreateFormDefinitionAsync(It.IsAny<FieldRequest>(), request.ExistingFormId, request.tenantId, userEmail))
+        _formServiceMock.Setup(x => x.CreateFormDefinitionAsync(It.IsAny<FieldRequest>(), request.ExistingFormId, request.tenantId, userEmail, true))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -269,7 +269,7 @@ public class FormDefinitionControllerTests
         _requestContextMock.Setup(x => x.UserEmail).Returns(userEmail);
         _formHistoryServiceMock.Setup(x => x.GetVersion(formId, version))
             .ReturnsAsync(fieldRequest);
-        _formServiceMock.Setup(x => x.CreateFormDefinitionAsync(fieldRequest, formId, tenantId, userEmail))
+        _formServiceMock.Setup(x => x.CreateFormDefinitionAsync(fieldRequest, formId, tenantId, userEmail, false))
             .ReturnsAsync(expectedResponse);
 
         // Act
