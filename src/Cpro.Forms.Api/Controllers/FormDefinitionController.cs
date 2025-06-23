@@ -10,7 +10,6 @@ namespace Cpro.Forms.Api.Controllers;
 
 [Route("[controller]")]
 [ApiController]
-[AllowAnonymous]
 public class FormDefinitionController : Controller
 {
     private readonly IFormDesignerService _formService;
