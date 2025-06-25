@@ -101,26 +101,14 @@ namespace Peritos.Common.Data
         }
 
         /// <summary>
-        /// Deletes the specified entity. For entities inheriting from <see cref="Auditable"/>,
-        /// performs a soft delete by setting the deletion date and user; otherwise, deletes physically.
+        /// Deletes the specified entity
         /// </summary>
         /// <param name="entity">The entity to delete.</param>
         /// <param name="commitChanges">If true, commits the deletion immediately.</param>
         /// <returns>The deleted entity.</returns>
         public async Task<T> Delete(T entity, bool commitChanges = true)
         {
-            //If the type we are trying to delete is auditable, then we don't actually delete it but instead set it to be updated with a delete date. 
-            if (typeof(Auditable).IsAssignableFrom(typeof(T)))
-            {
-                (entity as Auditable).DateDeleted = DateTimeOffset.UtcNow;
-                (entity as Auditable).DeletedBy = _requestContext != null ? _requestContext.UserId : null;
-                _dbSet.Attach(entity);
-                _context.Entry(entity).State = EntityState.Modified;
-            }
-            else
-            {
-                _dbSet.Remove(entity);
-            }
+            _dbSet.Remove(entity);
 
             if (commitChanges)
             {

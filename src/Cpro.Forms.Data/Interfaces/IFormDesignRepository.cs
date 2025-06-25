@@ -17,4 +17,5 @@ public interface IFormDesignRepository : IRepository<FormDesign>
     Task<List<Tag>> GetTagsByNamesAsync(List<string> names);
     Task AddTagsAsync(List<Tag> tags);
     Task<List<string>> GetAllDistinctTagNamesAsync();
+    Task RemoveUserFromFormDesigns(string email, int tenantId);
 }

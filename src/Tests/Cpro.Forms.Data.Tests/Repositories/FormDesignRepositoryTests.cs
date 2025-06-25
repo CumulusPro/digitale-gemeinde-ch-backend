@@ -418,4 +418,68 @@ public class FormDesignRepositoryTests
         Assert.Equal(3, result.Count);
         Assert.Equal(new List<string> { "Apple", "Mango", "Zebra" }, result);
     }
+
+    [Fact]
+    public async Task RemoveUserFromFormDesigns_RemovesUserFromDesignsAndSavesChanges()
+    {
+        // Arrange
+        var userEmail = "remove@example.com";
+        var formId1 = "form-1";
+        var formId2 = "form-2";
+        var tenantId = 1;
+
+        var form1 = new FormDesign
+        {
+            Id = formId1,
+            Name = "Form 1",
+            TenantId = tenantId,
+            TenantName = "Tenant 1",
+            Designers = new List<Designer> { new Designer { Email = userEmail, FormDesignId = formId1 } },
+            Processors = new List<Processor> { new Processor { Email = "other@example.com", FormDesignId = formId1 } },
+            DateCreated = DateTimeOffset.UtcNow,
+            DateUpdated = DateTimeOffset.UtcNow
+        };
+
+        var form2 = new FormDesign
+        {
+            Id = formId2,
+            Name = "Form 2",
+            TenantId = tenantId,
+            TenantName = "Tenant 2",
+            Designers = new List<Designer> { new Designer { Email = "other@example.com", FormDesignId = formId2 } },
+            Processors = new List<Processor> { new Processor { Email = userEmail, FormDesignId = formId2 } },
+            DateCreated = DateTimeOffset.UtcNow,
+            DateUpdated = DateTimeOffset.UtcNow
+        };
+
+        _dbContext.FormDesigns.AddRange(form1, form2);
+        await _dbContext.SaveChangesAsync();
+        _dbContext.ChangeTracker.Clear();
+
+        // Act
+        await _repository.RemoveUserFromFormDesigns(userEmail, tenantId);
+
+        // Assert
+        var updatedForm1 = await _dbContext.FormDesigns
+            .Include(f => f.Designers)
+            .Include(f => f.Processors)
+            .FirstOrDefaultAsync(f => f.Id == formId1);
+
+        var updatedForm2 = await _dbContext.FormDesigns
+            .Include(f => f.Designers)
+            .Include(f => f.Processors)
+            .FirstOrDefaultAsync(f => f.Id == formId2);
+
+        Assert.NotNull(updatedForm1);
+        Assert.DoesNotContain(updatedForm1.Designers, d => d.Email == userEmail);
+        Assert.Contains(updatedForm1.Processors, p => p.Email == "other@example.com");
+
+        Assert.NotNull(updatedForm2);
+        Assert.DoesNotContain(updatedForm2.Processors, p => p.Email == userEmail);
+        Assert.Contains(updatedForm2.Designers, d => d.Email == "other@example.com");
+
+        Assert.True(updatedForm1.DateUpdated > form1.DateUpdated);
+        Assert.True(updatedForm2.DateUpdated > form2.DateUpdated);
+    }
+
 }

@@ -16,12 +16,14 @@ public class UserService : IUserService
     private readonly IUserRepository _userRepository;
     private readonly ITenantRepository _tenantRepository;
     private readonly IMapper _mapper;
+    private readonly IFormDesignerService _formDesignerService;
 
-    public UserService(IUserRepository userRepository, IMapper mapper, ITenantRepository tenantRepository)
+    public UserService(IUserRepository userRepository, IMapper mapper, ITenantRepository tenantRepository, IFormDesignerService formDesignerService)
     {
         _userRepository = userRepository;
         _mapper = mapper;
         _tenantRepository = tenantRepository;
+        _formDesignerService = formDesignerService;
     }
 
     /// <summary>
@@ -64,6 +66,7 @@ public class UserService : IUserService
 
     /// <summary>
     /// Deletes a user from the system.
+    /// Also removes the user from any associated form designs.
     /// </summary>
     /// <param name="id">The unique identifier of the user to delete</param>
     /// <exception cref="KeyNotFoundException">Thrown when the user is not found</exception>
@@ -73,6 +76,9 @@ public class UserService : IUserService
             ?? throw new KeyNotFoundException($"User not found with id: {id}");
 
         await _userRepository.DeleteUserAsync(user);
+
+        // Remove user from all Designer and Processor entries
+        await _formDesignerService.RemoveUserFromFormDesigns(user.Email, user.TenantId);
     }
 
     /// <summary>

@@ -12,13 +12,15 @@ public class UserServiceTests
     private readonly Mock<IMapper> _mapperMock;
     private readonly Mock<ITenantRepository> _tenantRepositoryMock;
     private readonly UserService _userService;
+    private readonly Mock<IFormDesignerService> _formDesignerServiceMock;
 
     public UserServiceTests()
     {
         _userRepositoryMock = new Mock<IUserRepository>();
         _mapperMock = new Mock<IMapper>();
         _tenantRepositoryMock = new Mock<ITenantRepository>();
-        _userService = new UserService(_userRepositoryMock.Object, _mapperMock.Object, _tenantRepositoryMock.Object);
+        _formDesignerServiceMock = new Mock<IFormDesignerService>();
+        _userService = new UserService(_userRepositoryMock.Object, _mapperMock.Object, _tenantRepositoryMock.Object, _formDesignerServiceMock.Object);
     }
 
     [Fact]
@@ -99,11 +101,15 @@ public class UserServiceTests
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var user = new Data.Models.User.User { Id = userId };
+        var userEmail = "test@example.com";
+        var tenantId = 1;
+        var user = new Data.Models.User.User { Id = userId, Email = userEmail, TenantId = tenantId };
 
         _userRepositoryMock.Setup(x => x.GetUserByIdAsync(userId))
             .ReturnsAsync(user);
         _userRepositoryMock.Setup(x => x.DeleteUserAsync(user))
+            .Returns(Task.CompletedTask);
+        _formDesignerServiceMock.Setup(x => x.RemoveUserFromFormDesigns(userEmail, tenantId))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -112,6 +118,7 @@ public class UserServiceTests
         // Assert
         _userRepositoryMock.Verify(x => x.GetUserByIdAsync(userId), Times.Once);
         _userRepositoryMock.Verify(x => x.DeleteUserAsync(user), Times.Once);
+        _formDesignerServiceMock.Verify(x => x.RemoveUserFromFormDesigns(userEmail, tenantId), Times.Once);
     }
 
     [Fact]

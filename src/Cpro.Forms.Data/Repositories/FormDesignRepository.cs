@@ -220,4 +220,48 @@ public class FormDesignRepository : RepositoryBase<FormDesign, SqlContext>, IFor
             .Select(t => t.TagName)
             .ToListAsync();
     }
+
+    /// <summary>
+    /// Removes a user email from all form designs's designers and processors they are associated with.
+    /// </summary>
+    /// <param name="email">email of the user to be removed</param>
+    /// <param name="tenantId">tenantId of the user to be removed</param>
+    public async Task RemoveUserFromFormDesigns(string email, int tenantId)
+    {
+        var formDesigns = await _context.FormDesigns
+            .Include(f => f.Designers)
+            .Include(f => f.Processors)
+            .Where(fd => fd.TenantId == tenantId && (fd.Designers.Any(d => d.Email == email) || fd.Processors.Any(p => p.Email == email)))
+            .ToListAsync();
+
+        if (formDesigns.Count == 0)
+            return;
+
+        foreach (var form in formDesigns)
+        {
+            bool modified = false;
+
+            var newDesigners = form.Designers.Where(d => d.Email != email).ToList();
+            if (newDesigners.Count != form.Designers.Count)
+            {
+                form.Designers = newDesigners;
+                modified = true;
+            }
+
+            var newProcessors = form.Processors.Where(p => p.Email != email).ToList();
+            if (newProcessors.Count != form.Processors.Count)
+            {
+                form.Processors = newProcessors;
+                modified = true;
+            }
+
+            if (modified)
+            {
+                form.DateUpdated = DateTimeOffset.UtcNow;
+                _context.FormDesigns.Update(form);
+            }
+        }
+
+        await _context.SaveChangesAsync();
+    }
 }

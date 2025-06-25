@@ -279,6 +279,16 @@ public class FormDesignerService : IFormDesignerService
         return await _formDesignRepository.GetAllDistinctTagNamesAsync();
     }
 
+    /// <summary>
+    /// removes the email from any associated form designs.
+    /// </summary>
+    /// <param name="email">email of the user to be removed</param>
+    /// <param name="tenantId">tenantId of the user to be removed</param>
+    public async Task RemoveUserFromFormDesigns(string email, int tenantId)
+    {
+        await _formDesignRepository.RemoveUserFromFormDesigns(email, tenantId);
+    }
+
     private string MapFieldType(string datatype)
     {
         if (datatype.ToLower().Equals("number"))

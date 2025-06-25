@@ -432,4 +432,21 @@ public class FormDesignerServiceTests
         Assert.Equal(expectedTags, result);
     }
 
+    [Fact]
+    public async Task RemoveUserFromFormDesigns_CallsRepository_WithCorrectEmail()
+    {
+        // Arrange
+        var email = "test@example.com";
+        var tenantId = 1;
+
+        _formDesignRepositoryMock.Setup(r => r.RemoveUserFromFormDesigns(email, tenantId))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await _formDesignerService.RemoveUserFromFormDesigns(email, tenantId);
+
+        // Assert
+        _formDesignRepositoryMock.Verify(r => r.RemoveUserFromFormDesigns(email, tenantId), Times.Once);
+    }
+
 }
