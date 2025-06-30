@@ -2,6 +2,7 @@
 using Cpro.Forms.Service.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Peritos.Common.Abstractions;
 using Peritos.Common.Abstractions.Paging;
 
 namespace Cpro.Forms.Api.Controllers;
@@ -11,10 +12,12 @@ namespace Cpro.Forms.Api.Controllers;
 public class FormController : Controller
 {
     private readonly IFormService _formService;
+    private readonly IRequestContext _requestContext;
 
-    public FormController(IFormService formService)
+    public FormController(IFormService formService, IRequestContext requestContext)
     {
         _formService = formService;
+        _requestContext = requestContext;
     }
 
     /// <summary>
@@ -72,7 +75,7 @@ public class FormController : Controller
     [HttpGet("count")]
     public async Task<ActionResult<List<FormNavigation>>> GetFormNavigation([FromQuery] int? tenantId)
     {
-        var response = await _formService.GetFormNavigationAsync(tenantId);
+        var response = await _formService.GetFormNavigationAsync(tenantId, _requestContext.UserEmail);
         return Ok(response);
     }
 

@@ -144,10 +144,11 @@ public class FormDesignerService : IFormDesignerService
     /// Retrieves all form designs for a specific tenant.
     /// </summary>
     /// <param name="tenantId">The tenant identifier</param>
+    /// <param name="email">logged in user's email</param>
     /// <returns>A list of form designs with signed URLs</returns>
-    public async Task<List<FormDesign>> GetFormDesignsByTenantIdAsync(int tenantId)
+    public async Task<List<FormDesign>> GetFormDesignsByTenantIdAsync(int tenantId, string email)
     {
-        var formDesigns = await _formDesignRepository.GetFormDesignsByTenantId(tenantId);
+        var formDesigns = await _formDesignRepository.GetFormDesignsByTenantId(tenantId, email);
 
         foreach (var form in formDesigns)
         {

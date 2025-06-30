@@ -120,6 +120,7 @@ public class FormServiceTests
     {
         // Arrange
         var tenantId = 1;
+        var userEmail = "user@example.com";
         var formDesigns = new List<FormDesign>
         {
             new FormDesign { id = "form1", Name = "Form 1", FormId = 1 },
@@ -132,13 +133,13 @@ public class FormServiceTests
             new Data.Models.FormData { FormId = "form2", Status = "Completed" }
         };
 
-        _formDesignerServiceMock.Setup(x => x.GetFormDesignsByTenantIdAsync(tenantId))
+        _formDesignerServiceMock.Setup(x => x.GetFormDesignsByTenantIdAsync(tenantId, userEmail))
             .ReturnsAsync(formDesigns);
         _formDataRepositoryMock.Setup(x => x.GetFormDatasByTenantId(tenantId))
             .ReturnsAsync(formDatas);
 
         // Act
-        var result = await _formService.GetFormNavigationAsync(tenantId);
+        var result = await _formService.GetFormNavigationAsync(tenantId, userEmail);
 
         // Assert
         Assert.NotNull(result);
@@ -154,7 +155,7 @@ public class FormServiceTests
         Assert.Equal("Form 2", form2Nav.Name);
         Assert.Equal(1, form2Nav.Count); // 1 status for form2
 
-        _formDesignerServiceMock.Verify(x => x.GetFormDesignsByTenantIdAsync(tenantId), Times.Once);
+        _formDesignerServiceMock.Verify(x => x.GetFormDesignsByTenantIdAsync(tenantId, userEmail), Times.Once);
         _formDataRepositoryMock.Verify(x => x.GetFormDatasByTenantId(tenantId), Times.Once);
     }
 

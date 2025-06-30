@@ -3,6 +3,7 @@ using Cpro.Forms.Service.Models;
 using Cpro.Forms.Service.Services;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
+using Peritos.Common.Abstractions;
 using Peritos.Common.Abstractions.Paging;
 
 namespace Cpro.Forms.Api.Tests.Controllers;
@@ -10,12 +11,14 @@ namespace Cpro.Forms.Api.Tests.Controllers;
 public class FormControllerTests
 {
     private readonly Mock<IFormService> _formServiceMock;
+    private readonly Mock<IRequestContext> _requestContextMock;
     private readonly FormController _controller;
 
     public FormControllerTests()
     {
         _formServiceMock = new Mock<IFormService>();
-        _controller = new FormController(_formServiceMock.Object);
+        _requestContextMock = new Mock<IRequestContext>();
+        _controller = new FormController(_formServiceMock.Object, _requestContextMock.Object);
     }
 
     [Fact]
@@ -83,8 +86,10 @@ public class FormControllerTests
     {
         // Arrange
         var tenantId = 1;
+        var userEmail = "test@example.com";
         var expectedResponse = new List<FormNavigation>();
-        _formServiceMock.Setup(x => x.GetFormNavigationAsync(tenantId))
+        _requestContextMock.Setup(x => x.UserEmail).Returns(userEmail);
+        _formServiceMock.Setup(x => x.GetFormNavigationAsync(tenantId, userEmail))
             .ReturnsAsync(expectedResponse);
 
         // Act

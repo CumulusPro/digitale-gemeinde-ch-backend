@@ -135,18 +135,33 @@ public class FormDesignRepositoryTests
     {
         // Arrange
         var tenantId = 101;
-        _dbContext.FormDesigns.Add(new FormDesign
+        var userEmail = "user@example.com";
+
+        // Add user
+        var user = new User
         {
-            Id = Guid.NewGuid().ToString(),
+            Id = Guid.NewGuid(),
+            Email = userEmail,
+            TenantId = tenantId,
+            Role = Role.Designer
+        };
+        _dbContext.Users.Add(user);
+
+        // Add form and assign designer
+        var formId = Guid.NewGuid().ToString();
+        var formDesign = new FormDesign
+        {
+            Id = formId,
             Name = "Tenant Form A",
             TenantId = tenantId,
             TenantName = "Test Tenant",
-        });
-
+            Designers = new List<Designer> { new Designer { Email = userEmail, FormDesignId = formId, Id = 1 } }
+        };
+        _dbContext.FormDesigns.Add(formDesign);
         await _dbContext.SaveChangesAsync();
 
         // Act
-        var results = await _repository.GetFormDesignsByTenantId(tenantId);
+        var results = await _repository.GetFormDesignsByTenantId(tenantId, userEmail);
 
         // Assert
         Assert.Single(results);

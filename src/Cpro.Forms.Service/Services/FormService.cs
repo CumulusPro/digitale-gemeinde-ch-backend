@@ -99,13 +99,14 @@ public class FormService : IFormService
     /// Retrieves form navigation data including form counts by status for a specific tenant.
     /// </summary>
     /// <param name="tenantId">The tenant identifier</param>
+    /// <param name="email">Logged-in user's email</param>
     /// <returns>A list of form navigation items with status-based counts</returns>
-    public async Task<List<FormNavigation>> GetFormNavigationAsync(int? tenantId)
+    public async Task<List<FormNavigation>> GetFormNavigationAsync(int? tenantId, string email)
     {
         var tenant = Convert.ToInt32(tenantId);
 
         // Step 1: Get form designs
-        var formDesigns = await _formDesignerService.GetFormDesignsByTenantIdAsync(tenant);
+        var formDesigns = await _formDesignerService.GetFormDesignsByTenantIdAsync(tenant, email);
 
         // Step 2: Prepare initial response list
         var response = formDesigns.Select(x => new FormNavigation

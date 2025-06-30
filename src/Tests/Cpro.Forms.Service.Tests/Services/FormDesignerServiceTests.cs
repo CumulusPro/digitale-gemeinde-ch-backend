@@ -292,6 +292,7 @@ public class FormDesignerServiceTests
     {
         // Arrange
         int tenantId = 1;
+        var userEmail = "user@example.com";
 
         var formDesigns = new List<Data.Models.FormDesign>
         {
@@ -299,7 +300,7 @@ public class FormDesignerServiceTests
             new Data.Models.FormDesign { StorageUrl = "url2" }
         };
 
-        _formDesignRepositoryMock.Setup(x => x.GetFormDesignsByTenantId(tenantId))
+        _formDesignRepositoryMock.Setup(x => x.GetFormDesignsByTenantId(tenantId, userEmail))
             .ReturnsAsync(formDesigns);
 
         _azureBlobServiceMock.Setup(x => x.GetSignedUrl(It.IsAny<string>()))
@@ -309,7 +310,7 @@ public class FormDesignerServiceTests
             .Returns(new List<FormDesign>());
 
         // Act
-        var result = await _formDesignerService.GetFormDesignsByTenantIdAsync(tenantId);
+        var result = await _formDesignerService.GetFormDesignsByTenantIdAsync(tenantId, userEmail);
 
         // Assert
         _azureBlobServiceMock.Verify(x => x.GetSignedUrl("url1"), Times.Once);

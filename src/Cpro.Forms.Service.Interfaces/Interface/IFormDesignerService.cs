@@ -8,7 +8,7 @@ public interface IFormDesignerService
     Task<FormDesign> CreateFormDefinitionAsync(FieldRequest fieldRequest, string formId, int? tenantId, string email, bool isImported = false);
     Task<string> GetFormDataJsonAsync(string formId);
     Task<DocumentResponse> GetFormDefinitionResponseAsync(string formId, int? tenantId);
-    Task<List<FormDesign>> GetFormDesignsByTenantIdAsync(int tenantId);
+    Task<List<FormDesign>> GetFormDesignsByTenantIdAsync(int tenantId, string email);
     Task DeleteFormDesignAsync(string formId, int tenantId);
     Task<FormDesign> DuplicateFormDefinitionAsync(string formId, string email);
     Task<PagingResponse<FormDesign>> SearchFormDesignsAsync(SearchRequest searchRequest, int tenantId, string email);

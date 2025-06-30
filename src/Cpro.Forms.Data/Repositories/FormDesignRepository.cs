@@ -77,16 +77,12 @@ public class FormDesignRepository : RepositoryBase<FormDesign, SqlContext>, IFor
     /// Retrieves all form designs for a specific tenant, including related entities.
     /// </summary>
     /// <param name="tenantId">The tenant identifier</param>
+    /// <param name="email">logged in user's email</param>
     /// <returns>A list of form designs with related entities for the tenant</returns>
-    public async Task<List<FormDesign>> GetFormDesignsByTenantId(int tenantId)
+    public async Task<List<FormDesign>> GetFormDesignsByTenantId(int tenantId, string email)
     {
-        return await GetAllWithInclude(
-            x => x.Id != null && x.TenantId == tenantId,
-            x => x.FormStates,
-            x => x.Designers,
-            x => x.Processors,
-            x => x.Tags)
-        .ToListAsync();
+        IQueryable<FormDesign> query = await GetFormDesignsQueryByTenantAndUserAsync(tenantId, email);
+        return query.ToList();
     }
 
     /// <summary>
@@ -125,32 +121,13 @@ public class FormDesignRepository : RepositoryBase<FormDesign, SqlContext>, IFor
     /// <returns>A paged response containing matching form designs</returns>
     public async Task<PagingResponse<FormDesign>> SearchFormDesignsAsync(SearchRequest searchParameters, int tenantId, string email)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email && u.TenantId == tenantId)
-            ?? throw new KeyNotFoundException($"User not found with email: {email}");
-
-        var query = _context.FormDesigns
-            .Include(f => f.Tags).ThenInclude(fdt => fdt.Tag)
-            .Include(f => f.Designers)
-            .Include(f => f.Processors)
-            .Where(x => x.Id != null && x.TenantId == tenantId)
-            .AsQueryable();
-
-        //Role - based filtering
-        if (user.Role == Role.Designer)
-        {
-            query = query.Where(f => f.Designers.Any(d => d.Email == email));
-        }
-        else if (user.Role == Role.Processor)
-        {
-            query = query.Where(f => f.Processors.Any(p => p.Email == email));
-        }
-        // Admins see everything, no filter needed
+        IQueryable<FormDesign> query = await GetFormDesignsQueryByTenantAndUserAsync(tenantId, email);
 
         if (!string.IsNullOrWhiteSpace(searchParameters.Keyword))
         {
             query = query.Where(t => t.Name.Contains(searchParameters.Keyword) || t.Tags.Any(t => t.Tag.TagName.Contains(searchParameters.Keyword)));
         }
-        
+
         if (!string.IsNullOrWhiteSpace(searchParameters.OrderBy))
         {
             query = query.OrderBy(searchParameters.OrderBy, searchParameters.OrderByDirection == PagingParametersOrderByDirectionEnum.Descending);
@@ -164,8 +141,8 @@ public class FormDesignRepository : RepositoryBase<FormDesign, SqlContext>, IFor
         var searchResults = await query.ToPagedList(searchParameters);
 
         return new PagingResponse<FormDesign>
-        { 
-            Data= searchResults,
+        {
+            Data = searchResults,
             TotalCount = totalItemCount,
             PageNumber = searchParameters.Page,
             PageSize = searchParameters.PageSize
@@ -263,5 +240,31 @@ public class FormDesignRepository : RepositoryBase<FormDesign, SqlContext>, IFor
         }
 
         await _context.SaveChangesAsync();
+    }
+
+    private async Task<IQueryable<FormDesign>> GetFormDesignsQueryByTenantAndUserAsync(int tenantId, string email)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email && u.TenantId == tenantId)
+                    ?? throw new KeyNotFoundException($"User not found with email: {email}");
+
+        var query = _context.FormDesigns
+            .Include(f => f.Tags).ThenInclude(fdt => fdt.Tag)
+            .Include(f => f.Designers)
+            .Include(f => f.Processors)
+            .Include(f => f.FormStates)
+            .Where(x => x.Id != null && x.TenantId == tenantId)
+            .AsQueryable();
+
+        //Role - based filtering
+        if (user.Role == Role.Designer)
+        {
+            query = query.Where(f => f.Designers.Any(d => d.Email == email));
+        }
+        else if (user.Role == Role.Processor)
+        {
+            query = query.Where(f => f.Processors.Any(p => p.Email == email));
+        }
+        // Admins see everything, no filter needed
+        return query;
     }
 }
