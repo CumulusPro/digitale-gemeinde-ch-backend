@@ -1,7 +1,7 @@
 
 # Gemeinde Connect Backend
 
-This is the backend solution for the **Form Designer** application, implemented using ASP.NET Core. It provides APIs and shared components to support form management, storage, and integrations.
+This is the backend solution for the **GemeindeConnect** application, implemented using ASP.NET Core. It provides APIs and shared components to support form management, storage, and integrations.
 
 ## 🧱 Project Structure
 
@@ -76,8 +76,4 @@ Unit tests are located under:
 - Clean Architecture: Domain, Application, Infrastructure, API
 - Application Insights integration
 - Paging and Validation utilities
-
-## 📄 License
-
-Proprietary – Internal use only.
 
