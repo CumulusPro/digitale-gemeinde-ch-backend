@@ -1,5 +1,5 @@
 
-# Form Designer Backend
+# Gemeinde Connect Backend
 
 This is the backend solution for the **Form Designer** application, implemented using ASP.NET Core. It provides APIs and shared components to support form management, storage, and integrations.
 
@@ -80,3 +80,4 @@ Unit tests are located under:
 ## 📄 License
 
 Proprietary – Internal use only.
+
